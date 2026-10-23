@@ -166,7 +166,8 @@ h3{font:600 15px var(--cond);letter-spacing:.08em;text-transform:uppercase;color
 .mk.cur .pin{box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(235,165,72,.9)}
 @media (prefers-reduced-motion:no-preference){.mk.cur .pin{animation:pulse 1.6s ease-in-out infinite}}
 @keyframes pulse{50%{box-shadow:0 0 0 3px #fff,0 0 0 12px rgba(235,165,72,0)}}
-.mf{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center}
+.mf{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:40px}
+.mf .mfh{flex:none;min-width:32px;max-width:32px!important;max-height:32px!important}
 .mfh{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #fff;background:#283036;color:#fff;display:grid;place-items:center;font:700 14px var(--cond);box-shadow:0 1px 4px rgba(0,0,0,.5)}
 .mb{margin-top:-6px;display:flex;align-items:center;gap:1px;background:#181D21;color:#EBA548;border-radius:999px;padding:0 5px 0 3px;font:700 12px var(--cond);line-height:16px}
 .mb img,.mcount img{height:12px;width:auto}
@@ -178,6 +179,8 @@ h3{font:600 15px var(--cond);letter-spacing:.08em;text-transform:uppercase;color
 .row24 img{width:100%;height:20px;object-fit:contain}
 .row24 img.e{opacity:.13;filter:grayscale(1)}
 .row24 img:nth-child(6n):not(:last-child){border-right:1.5px solid var(--line);padding-right:2px}
+.dcard.pick{border:1.5px solid var(--walk)}
+.dcard.pick h3{color:var(--walk)}
 .dcard{background:var(--panel);border-radius:12px;padding:14px 16px;margin-top:14px}
 .dcard h3{margin:0 0 6px;color:var(--amber)}
 .dcard p{margin:0 0 10px}
@@ -310,26 +313,31 @@ const milestones=[
  {n:20,pid:"travis",t:"Beer 20 for Trav. He has left the building. Hopefully in an Uber."},
  {n:24,pid:"bret",t:"Beer 24 for Bret. You absolute legend. Congrats, champ."}
 ];
-const legColor=s=>s.extra?"var(--amber)":s.leg==="drive"?"var(--blue)":"var(--walk)";
+const legColor=s=>s.home?"var(--ink)":s.extra?"var(--amber)":s.leg==="drive"?"var(--blue)":"var(--walk)";
 const legHex=s=>s.leg==="drive"?"#7FB2DB":"#7CC4A0";
-const q=s=>encodeURIComponent(s.extra?`${s.n}, Minneapolis, MN`:s.n+", "+s.a+", MN");
+const q=s=>encodeURIComponent(s.home?s.a:s.extra?`${s.n}, Minneapolis, MN`:s.n+", "+s.a+", MN");
 const gPlace=s=>"https://www.google.com/maps/search/?api=1&query="+q(s);
 const gDir=s=>"https://www.google.com/maps/dir/?api=1&destination="+q(s)+"&travelmode="+(s.leg==="drive"?"driving":"walking");
 
-// Planned stops plus any added during the night, each added stop placed after the bar it followed
+// Home base: where the day starts, before the first bar
+const homeStop={id:"home",home:true,short:"Home base",n:"Home base",a:"4227 Alden Dr, Edina, MN 55416",lat:44.9250803,lng:-93.3321559,leg:"drive"};
+const numOf=s=>s.home?"H":s.extra?"+":stops.indexOf(s)+1;
+// Home base, then planned stops, plus any added during the night, each added stop placed after the bar it followed
 function allStops(){
   const ex=(state&&state.extra)||[];
   const out=[];
   const place=id=>ex.filter(e=>e.after===id).forEach(e=>{out.push({...e,extra:true,short:e.n.length>14?e.n.slice(0,13)+"…":e.n});place(e.id);});
-  place("__start");
+  out.push(homeStop);
+  place("__start");place("home");
   stops.forEach(s=>{out.push(s);place(s.id);});
   ex.filter(e=>!out.some(o=>o.id===e.id)).forEach(e=>out.push({...e,extra:true,short:e.n}));
   return out;
 }
-const label=s=>s.extra?`<span class="k">+</span>${s.short}`:`<span class="k">${stops.indexOf(s)+1}</span>${s.short}`;
+const label=s=>s.home?"Home base":s.extra?`<span class="k">+</span>${s.short}`:`<span class="k">${stops.indexOf(s)+1}</span>${s.short}`;
 
 const tabs=document.getElementById("tabs"), panels=document.getElementById("panels");
-let views=[], current=location.hash.slice(1)||"route";
+const defaultView=()=>Date.now()<new Date("2026-10-24T14:00:00-05:00")?"daybefore":"route";
+let views=[], current=location.hash.slice(1)||defaultView();
 
 // Route panel (built once)
 const rp=document.createElement("section");rp.id="panel-route";rp.role="tabpanel";
@@ -357,6 +365,8 @@ const packList=[
  ["pedia","Pedialyte for Sunday morning","Future you says thanks."]
 ];
 db.innerHTML=`<h2>The day before</h2><p class="sub">Saturday's a marathon. Here's how to show up ready.</p>
+  <div class="dcard pick"><h3>Scott will pick you up</h3>
+    <p>Sit tight. We meet at home base in Edina, then head to Mainstreet in Hopkins.</p></div>
   <div class="dcard"><h3>Get your bets in</h3>
     <p>Wives, moms, dads and boyfriends: bet how many beers Bret, Travis and Greg each finish, and leave a heckle that unlocks when they hit that beer.</p>
     <p class="cd" id="dbCountdown"></p>
@@ -375,8 +385,9 @@ db.innerHTML=`<h2>The day before</h2><p class="sub">Saturday's a marathon. Here'
     <div class="checks">${packList.map(([k,t,d])=>`<label class="chk"><input type="checkbox" data-pack="${k}"><span><b>${t}</b><small>${d}</small></span></label>`).join("")}</div></div>
   <div class="dcard"><h3>Know the plan</h3>
     <ul class="list">
-      <li>Start at <b>Mainstreet in Hopkins at 2 PM</b>.</li>
-      <li>Nobody drives after the first stop.</li>
+      <li><b>Scott picks you up.</b> We start at home base in Edina.</li>
+      <li>First bar: <b>Mainstreet in Hopkins</b>.</li>
+      <li>Nobody who's drinking drives.</li>
       <li>Nye's opens at 4 PM. Don't show up early.</li>
       <li>Park at the Moose, then everything is walkable.</li>
       <li>Grumpy's is last. It closes at 2 AM.</li>
@@ -394,14 +405,17 @@ panels.append(bp);
 
 function barPanelHTML(s,list){
   const i=list.indexOf(s), prev=list[i-1], next=list[i+1];
-  const head=`<div class="bar-head"><span class="num" style="background:${legColor(s)}">${s.extra?"+":stops.indexOf(s)+1}</span>
-      <div><h2>${s.n}</h2><p class="sub">${s.extra?"Off-plan stop. The night had other ideas.":s.tag}</p></div></div>
+  const head=`<div class="bar-head"><span class="num" style="background:${legColor(s)}">${numOf(s)}</span>
+      <div><h2>${s.n}</h2><p class="sub">${s.home?"Where it all starts. Scott does the pickups, we regroup here, then Mainstreet.":s.extra?"Off-plan stop. The night had other ideas.":s.tag}</p></div></div>
     <div id="msb-${s.id}"></div>
     <div id="visit-${s.id}"></div>
     <div class="left" id="left-${s.id}" hidden></div>`;
   const pager=`<div class="pager">
       <button class="btn" type="button" data-go="${prev?prev.id:"route"}">‹ ${prev?prev.short:"Route"}</button>
       <button class="btn" type="button" data-go="${next?next.id:""}" ${next?"":"disabled"}>${next?next.short+" ›":"Last stop"}</button></div>`;
+  if(s.home)return head+`
+    <h3>Address</h3><p style="margin:0">${s.a}</p>
+    <div class="actions" style="grid-template-columns:1fr"><a class="btn primary" href="${gDir(s)}" target="_blank" rel="noopener">Directions</a></div>`+pager;
   if(s.extra)return head+`
     <div class="actions">
       <a class="btn primary" href="${gDir(s)}" target="_blank" rel="noopener">Directions</a>
@@ -430,7 +444,7 @@ function buildTabs(){
   const list=allStops(), key=list.map(s=>s.id).join("|");
   if(key===builtKey)return false;
   builtKey=key;
-  views=[{id:"route",label:"Route"},{id:"daybefore",label:"Day Before"},{id:"bets",label:"Bets"},...list.map(s=>({id:s.id,label:label(s)}))];
+  views=[{id:"daybefore",label:"Day Before"},{id:"route",label:"Route"},{id:"bets",label:"Bets"},...list.map(s=>({id:s.id,label:label(s)}))];
   tabs.innerHTML="";
   views.forEach(v=>{
     const b=document.createElement("button");
@@ -473,7 +487,7 @@ function initMap(){
   L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,
     attribution:'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, USGS, OpenStreetMap contributors'}).addTo(map);
   const pts=stops.map(s=>[s.lat,s.lng]);
-  L.polyline(pts.slice(0,4),{color:"#3B6E96",weight:4,opacity:.7}).addTo(map);
+  L.polyline([[homeStop.lat,homeStop.lng],...pts.slice(0,4)],{color:"#3B6E96",weight:4,opacity:.7}).addTo(map);
   L.polyline(pts.slice(3),{color:"#2E6B4F",weight:4,opacity:.7,dashArray:"6 8"}).addTo(map);
   markerLayer=L.layerGroup().addTo(map);
   map.on("zoomend",updateMap);
@@ -492,8 +506,8 @@ function updateMap(){
   markerLayer.clearLayers();
   const z=map.getZoom(), full=z>=FACE_ZOOM, ps=people(), cur=crawlStarted()?currentBar():null;
   mapStops().forEach(s=>{
-    const here=ps.reduce((n,p)=>n+atBar(s.id,p.id),0), been=!!visitOf(s.id).arrive||here>0, isCur=cur&&cur.id===s.id;
-    const num=s.extra?"+":stops.indexOf(s)+1, color=s.extra?"#EBA548":legHex(s);
+    const here=ps.reduce((n,p)=>n+atBar(s.id,p.id),0), been=!!visitOf(s.id).arrive||here>0||ps.some(p=>barPhoto(s.id,p.id)), isCur=cur&&cur.id===s.id;
+    const num=numOf(s), color=s.home?"#ECEFF0":s.extra?"#EBA548":legHex(s);
     let deco="";
     if(been&&full){
       deco=ps.map((p,k)=>{const a=Math.PI*(1+(k+1)/(ps.length+1)),x=14+Math.cos(a)*46,y=14+Math.sin(a)*46,n=atBar(s.id,p.id);
@@ -503,7 +517,7 @@ function updateMap(){
       html:`<div class="mk${isCur?" cur":""}${skipped(s)?" skip":""}"><div class="pin" style="background:${color}">${num}</div>${deco}</div>`});
     const v=visitOf(s.id), times=[v.arrive?"in "+clock(v.arrive):"",v.depart?"out "+clock(v.depart):""].filter(Boolean).join(" · ");
     const m=L.marker([s.lat,s.lng],{icon,zIndexOffset:isCur?1000:been?500:0}).addTo(markerLayer)
-      .bindPopup(`<b>${s.extra?"":num+". "}${s.n}</b><br>${s.extra?"Off-plan stop":"Sat "+s.h}${times?"<br>"+times:""}${been?"<br>"+ps.map(p=>`${p.name} ${atBar(s.id,p.id)}`).join(" · "):""}<br><a href="#${s.id}" data-go="${s.id}">Open tab ›</a>`);
+      .bindPopup(`<b>${s.extra||s.home?"":num+". "}${s.n}</b><br>${s.home?"Where it all starts":s.extra?"Off-plan stop":"Sat "+s.h}${times?"<br>"+times:""}${been?"<br>"+ps.map(p=>`${p.name} ${atBar(s.id,p.id)}`).join(" · "):""}<br><a href="#${s.id}" data-go="${s.id}">Open tab ›</a>`);
     m.on("mouseover",()=>m.openPopup());
   });
 }
@@ -523,7 +537,7 @@ function show(id,push){
   if(id==="route")setTimeout(initMap,0);else if(id==="bets")setTimeout(loadBets,0);else if(id==="daybefore")setTimeout(renderDayBefore,0);else loadPhotos(id);
   if(push)window.scrollTo({top:document.getElementById("tabs").offsetTop-4,behavior:"smooth"});
 }
-window.addEventListener("hashchange",()=>show(location.hash.slice(1)||"route",false));
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)||defaultView(),false));
 
 
 
@@ -549,7 +563,7 @@ const total=pid=>allStops().reduce((n,s)=>n+atBar(s.id,pid),0);
 function through(bar,pid){let n=0;for(const s of actual()){n+=atBar(s.id,pid);if(s.id===bar)return n;}return n;}
 // Planned bar counts as skipped once we've arrived somewhere later in the night
 function skipped(s){
-  if(s.extra||visitOf(s.id).arrive||people().some(p=>atBar(s.id,p.id)>0))return false;
+  if(s.home||s.extra||visitOf(s.id).arrive||people().some(p=>atBar(s.id,p.id)>0))return false;
   const list=allStops(), i=list.indexOf(s);return list.slice(i+1).some(x=>visitOf(x.id).arrive);
 }
 // Where each milestone happened, if it has
@@ -640,7 +654,7 @@ function renderCrawl(){
   document.getElementById("crawl").innerHTML=a.map((s,k)=>{const v=visit(s.id);
     const times=[v.arrive?clock(v.arrive):"",v.depart?clock(v.depart):""].filter(Boolean).join(" – ");
     return `<button class="row" type="button" data-go="${s.id}"><span class="num" style="background:${legColor(s)}">${k+1}</span><span class="nm">${s.n}</span><span class="tm">${times}</span>
-      <span class="ad">${s.extra?"Off-plan stop":"Planned stop "+(stops.indexOf(s)+1)}${hits.filter(h=>h.bar.id===s.id).map(h=>`<span class="ms">${h.t}</span>`).join("")}
+      <span class="ad">${s.home?"Home base":s.extra?"Off-plan stop":"Planned stop "+(stops.indexOf(s)+1)}${hits.filter(h=>h.bar.id===s.id).map(h=>`<span class="ms">${h.t}</span>`).join("")}
       <span class="mini">${ps.map(p=>`<span class="h">${faceHTML(p,barPhoto(s.id,p.id))}${through(s.id,p.id)}</span>`).join("")}</span></span></button>`;}).join("");
   document.getElementById("addWrap").innerHTML=token?`<div class="actions" style="grid-template-columns:1fr;margin-top:14px"><button class="btn primary" type="button" id="addStop">+ Add a stop that's not on the plan</button></div>`:"";
 }
@@ -713,7 +727,7 @@ function renderAdminBar(){
 }
 
 // Photos: resize on the phone, then commit to images/crawl/ in the repo
-const cam=document.createElement("input");cam.type="file";cam.accept="image/*";cam.setAttribute("capture","environment");cam.hidden=true;document.body.append(cam);
+const cam=document.createElement("input");cam.type="file";cam.accept="image/*";cam.hidden=true;document.body.append(cam);
 let camTarget=null;
 cam.addEventListener("change",async()=>{
   const f=cam.files&&cam.files[0];cam.value="";if(!f||!camTarget)return;
