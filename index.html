@@ -930,12 +930,18 @@ async function loadBets(force){
   }catch(e){if(!betRows)betRows=[];}
   renderBets();
 }
-// One bet per person: their latest before betting closed
+// One bet per name, made of their latest pick for each guy before betting closed. Heckle-only rows don't affect it.
 function validBets(){
-  const by={};
-  (betRows||[]).filter(r=>!r.ts||r.ts<=closesAt).forEach(r=>{const k=r.name.toLowerCase();if(!by[k]||(r.ts&&by[k].ts&&r.ts>by[k].ts))by[k]=r;});
+  const by={}, pids=people().map(p=>p.id);
+  [...(betRows||[])].filter(r=>!r.ts||r.ts<=closesAt).sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(r=>{
+    if(!pids.some(id=>r[id]!=null))return;
+    const k=r.name.toLowerCase(), cur=by[k]||(by[k]={name:r.name});
+    pids.forEach(id=>{if(r[id]!=null)cur[id]=r[id];});
+  });
   return Object.values(by);
 }
+// Every heckle counts, sent any time
+const heckleRows=()=>(betRows||[]).filter(r=>r.comment&&r.target);
 function statsFor(pid){
   const v=validBets().map(b=>b[pid]).filter(x=>x!=null);
   if(!v.length)return null;
@@ -970,12 +976,13 @@ function renderBets(){
   const ps=people(), open=betsOpen(), bets=validBets();
   const mins=Math.max(0,Math.round((closesAt-Date.now())/60000));
   const left=mins>=60?`${Math.floor(mins/60)} hr ${mins%60} min`:`${mins} min`;
-  const heckles=bets.filter(b=>b.comment&&b.target);
+  const heckles=heckleRows();
   intro.innerHTML=`<p class="sub">${open?`Betting closes at 2:00 PM Saturday, in ${left}. One bet per name; your latest counts.`:`Betting closed at 2:00 PM. ${bets.length} bet${bets.length===1?"":"s"} in.`}</p>
     ${betsDemo?`<div class="banner"><div class="bn">Example bets</div><p>These are made up so you can see how it works. Real bets show here once the betting form is connected.</p></div>`:""}`;
   // The form is drawn once and left alone, so refreshes never wipe what someone is typing
-  if(open&&!betsDemo){ if(!document.getElementById("betform"))fw.innerHTML=formHTML(ps); }
-  else fw.innerHTML=open&&betsDemo?`<p class="sub" style="margin-top:16px">The betting form appears here once it's connected.</p>`:"";
+  if(betsDemo)fw.innerHTML=`<p class="sub" style="margin-top:16px">The betting form appears here once it's connected.</p>`;
+  else if(!document.getElementById("heckform"))fw.innerHTML=formHTML(ps,open);
+  else if(!open){const bf=document.getElementById("betform");if(bf)bf.remove();}
   el.innerHTML=`
     <h3>How the crowd sees it</h3>
     <div class="key"><span><i style="background:var(--g)"></i>Up to the crowd's average</span><span><i style="background:linear-gradient(90deg,var(--g),var(--r))"></i>Fading over 1 std dev</span><span><i style="background:var(--r)"></i>Nobody believes in you</span></div>
@@ -992,33 +999,53 @@ function leaderHTML(ps,bets){
   const sc=bets.map(b=>({name:b.name,err:ps.reduce((n,p)=>n+(b[p.id]==null?24:Math.abs(b[p.id]-total(p.id))),0)})).sort((a,b)=>a.err-b.err).slice(0,5);
   return `<h3>Closest bettors (if the night ended now)</h3><ul class="list">${sc.map((s,i)=>`<li><b>${i+1}. ${s.name}</b> · off by ${s.err} beer${s.err===1?"":"s"} total</li>`).join("")}</ul>`;
 }
-function formHTML(ps){
+function formHTML(ps,open){
   const opts=Array.from({length:25},(_,k)=>`<option value="${k}">${k}</option>`).join("");
-  return `<form class="betform" id="betform" style="margin-top:12px">
-    <label>Your name<input id="bName" required maxlength="40" autocomplete="given-name" placeholder="So we know who to brag about"></label>
-    <div class="fhead"><b>How many beers until they quit?</b><span>Pick a number from 0 to 24 for each guy.</span></div>
+  let saved="";try{saved=localStorage.getItem("oct-name")||"";}catch(e){}
+  return `<div class="betform" style="margin-top:12px">
+    <label>Your name<input id="bName" maxlength="40" autocomplete="given-name" placeholder="So we know who to brag about" value="${saved.replace(/"/g,"&quot;")}"></label></div>
+  ${open?`<form class="betform" id="betform" style="margin-top:12px">
+    <div class="fhead" style="border:0;padding:0;margin:0"><b>How many beers until they quit?</b><span>Pick a number from 0 to 24 for each guy. Change your mind? Bet again; your latest picks count.</span></div>
     <div class="bgrid">${ps.map(p=>`<label>${p.name}<select id="b-${p.id}" required><option value="">Pick</option>${opts}</select></label>`).join("")}</div>
-    <div class="fhead"><b>Leave a heckle (optional)</b><span>It stays hidden until he hits the beer you pick, then pops up for everyone.</span></div>
-    <div class="bgrid"><label>Who's it for?<select id="hWho"><option value="">Pick a guy</option>${ps.map(p=>`<option value="${p.name}">${p.name}</option>`).join("")}</select></label>
-      <label>Show it at beer #<select id="hAt"><option value="">Pick</option>${opts}</select></label></div>
-    <label>Your heckle<input id="hText" maxlength="140" placeholder="Greg, the couch misses you."></label>
     <div class="err" id="betErr"></div>
-    <button class="btn primary" type="submit" style="width:100%">Lock in my bet</button></form>`;
+    <button class="btn primary" type="submit" style="width:100%">Lock in my bet</button></form>`:""}
+  <form class="betform" id="heckform" style="margin-top:12px">
+    <div class="fhead" style="border:0;padding:0;margin:0"><b>Leave a heckle</b><span>No bet needed. It stays hidden until he hits the beer you pick, then pops up for everyone. Send as many as you want, all night.</span></div>
+    <div class="bgrid"><label>Who's it for?<select id="hWho" required><option value="">Pick a guy</option>${ps.map(p=>`<option value="${p.name}">${p.name}</option>`).join("")}</select></label>
+      <label>Show it at beer #<select id="hAt"><option value="">Right away</option>${opts}</select></label></div>
+    <label>Your heckle<input id="hText" required maxlength="140" placeholder="Greg, the couch misses you."></label>
+    <div class="err" id="heckErr"></div>
+    <button class="btn primary" type="submit" style="width:100%">Send heckle</button></form>`;
+}
+async function sendForm(f){await fetch(BETS.formAction,{method:"POST",mode:"no-cors",body:f});}
+function nameOrErr(err){
+  const n=document.getElementById("bName").value.trim();
+  if(!n){err.textContent="Type your name at the top first.";document.getElementById("bName").focus();return null;}
+  try{localStorage.setItem("oct-name",n);}catch(e){}
+  return n;
 }
 document.addEventListener("submit",async e=>{
-  if(e.target.id!=="betform")return;e.preventDefault();
-  const err=document.getElementById("betErr"),E=BETS.entries,ps=people();
-  if(!betsOpen()){err.textContent="Betting closed at 2:00 PM.";return;}
-  const f=new URLSearchParams();
-  f.append(E.name,document.getElementById("bName").value.trim());
-  ps.forEach(p=>E[p.id]&&f.append(E[p.id],document.getElementById("b-"+p.id).value));
-  const who=document.getElementById("hWho").value,at=document.getElementById("hAt").value,txt=document.getElementById("hText").value.trim();
-  if(txt&&!who){err.textContent="Pick who the heckle is for.";return;}
-  if(who&&E.target)f.append(E.target,who); if(at&&E.at)f.append(E.at,at); if(txt&&E.comment)f.append(E.comment,txt);
-  err.textContent="Sending…";
-  try{await fetch(BETS.formAction,{method:"POST",mode:"no-cors",body:f});
-    err.textContent="Bet locked in. It'll show up in a few seconds.";e.target.reset();setTimeout(()=>loadBets(true),4000);
-  }catch(x){err.textContent="Couldn't send. Check your signal and try again.";}
+  const E=BETS.entries, ps=people();
+  if(e.target.id==="betform"){
+    e.preventDefault();
+    const err=document.getElementById("betErr"), n=nameOrErr(err); if(!n)return;
+    if(!betsOpen()){err.textContent="Betting closed at 2:00 PM.";return;}
+    const f=new URLSearchParams();f.append(E.name,n);
+    ps.forEach(p=>E[p.id]&&f.append(E[p.id],document.getElementById("b-"+p.id).value));
+    err.textContent="Sending…";
+    try{await sendForm(f);err.textContent="Bet locked in. It'll show up in a few seconds.";e.target.reset();setTimeout(()=>loadBets(true),4000);}
+    catch(x){err.textContent="Couldn't send. Check your signal and try again.";}
+  }
+  if(e.target.id==="heckform"){
+    e.preventDefault();
+    const err=document.getElementById("heckErr"), n=nameOrErr(err); if(!n)return;
+    const f=new URLSearchParams();f.append(E.name,n);
+    const who=document.getElementById("hWho").value, at=document.getElementById("hAt").value, txt=document.getElementById("hText").value.trim();
+    f.append(E.target,who); if(at)f.append(E.at,at); f.append(E.comment,txt);
+    err.textContent="Sending…";
+    try{await sendForm(f);err.textContent="Heckle sent. Got another?";document.getElementById("hText").value="";document.getElementById("hAt").value="";setTimeout(()=>loadBets(true),4000);}
+    catch(x){err.textContent="Couldn't send. Check your signal and try again.";}
+  }
 });
 setInterval(()=>{if(current==="bets"&&!document.hidden)loadBets();},60000);
 
