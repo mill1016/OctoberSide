@@ -405,7 +405,7 @@ function renderDayBefore(){
   el.textContent=mins>0?`Betting closes at 2:00 PM Saturday, in ${mins>=60?Math.floor(mins/60)+" hr "+(mins%60)+" min":mins+" min"}.`:"Betting is closed. See how the crowd called it.";
 }
 const bp=document.createElement("section");bp.id="panel-bets";bp.role="tabpanel";bp.hidden=true;
-bp.innerHTML=`<h2>Place your bets</h2><div id="betsBody"><p class="sub">Loading bets…</p></div>`;
+bp.innerHTML=`<h2>Place your bets</h2><div id="betsIntro"><p class="sub">Loading bets…</p></div><div id="betFormWrap"></div><div id="betsBody"></div>`;
 panels.append(bp);
 
 function barPanelHTML(s,list){
@@ -966,19 +966,22 @@ function verdict(p,st,live){
   return txt;
 }
 function renderBets(){
-  const el=document.getElementById("betsBody"); if(!el)return;
+  const el=document.getElementById("betsBody"), intro=document.getElementById("betsIntro"), fw=document.getElementById("betFormWrap"); if(!el)return;
   const ps=people(), open=betsOpen(), bets=validBets();
   const mins=Math.max(0,Math.round((closesAt-Date.now())/60000));
   const left=mins>=60?`${Math.floor(mins/60)} hr ${mins%60} min`:`${mins} min`;
   const heckles=bets.filter(b=>b.comment&&b.target);
+  intro.innerHTML=`<p class="sub">${open?`Betting closes at 2:00 PM Saturday, in ${left}. One bet per name; your latest counts.`:`Betting closed at 2:00 PM. ${bets.length} bet${bets.length===1?"":"s"} in.`}</p>
+    ${betsDemo?`<div class="banner"><div class="bn">Example bets</div><p>These are made up so you can see how it works. Real bets show here once the betting form is connected.</p></div>`:""}`;
+  // The form is drawn once and left alone, so refreshes never wipe what someone is typing
+  if(open&&!betsDemo){ if(!document.getElementById("betform"))fw.innerHTML=formHTML(ps); }
+  else fw.innerHTML=open&&betsDemo?`<p class="sub" style="margin-top:16px">The betting form appears here once it's connected.</p>`:"";
   el.innerHTML=`
-    <p class="sub">${open?`Betting closes at 2:00 PM Saturday, in ${left}. One bet per name; your latest counts.`:`Betting closed at 2:00 PM. ${bets.length} bet${bets.length===1?"":"s"} in.`}</p>
-    ${betsDemo?`<div class="banner"><div class="bn">Example bets</div><p>These are made up so you can see how it works. Real bets show here once the betting form is connected.</p></div>`:""}
+    <h3>How the crowd sees it</h3>
     <div class="key"><span><i style="background:var(--g)"></i>Up to the crowd's average</span><span><i style="background:linear-gradient(90deg,var(--g),var(--r))"></i>Fading over 1 std dev</span><span><i style="background:var(--r)"></i>Nobody believes in you</span></div>
     ${ps.map(p=>{const st=statsFor(p.id);return `<div class="betcard">
       <div class="bh">${token?`<button class="snap" type="button" data-snap="home" data-pid="${p.id}" aria-label="Starting photo of ${p.name}">${faceHTML(p,latestPhoto(p.id))}</button>`:faceHTML(p,latestPhoto(p.id))}<div><b>${p.name}</b><span>${st?`${st.n} bet${st.n===1?"":"s"} · ±${st.sd.toFixed(1)}`:"No bets yet"}</span></div></div>
       ${st?trackHTML(p,st,state?total(p.id):null)+`<p class="vd">${verdict(p,st,state?total(p.id):null)}</p>`:""}</div>`;}).join("")}
-    ${open&&!betsDemo?formHTML(ps):open&&betsDemo?`<p class="sub" style="margin-top:16px">The betting form appears here once it's connected.</p>`:""}
     <h3>Heckles</h3>
     ${heckles.length?`<ul class="list">${heckles.sort((a,b)=>(a.at||0)-(b.at||0)).map(h=>{const p=ps.find(x=>x.id===h.target);if(!p)return "";
       const unlocked=h.at==null||(state&&total(p.id)>=h.at);
@@ -991,7 +994,7 @@ function leaderHTML(ps,bets){
 }
 function formHTML(ps){
   const opts=Array.from({length:25},(_,k)=>`<option value="${k}">${k}</option>`).join("");
-  return `<h3>Place your bet</h3><form class="betform" id="betform">
+  return `<form class="betform" id="betform" style="margin-top:12px">
     <label>Your name<input id="bName" required maxlength="40" autocomplete="given-name" placeholder="So we know who to brag about"></label>
     <div class="fhead"><b>How many beers until they quit?</b><span>Pick a number from 0 to 24 for each guy.</span></div>
     <div class="bgrid">${ps.map(p=>`<label>${p.name}<select id="b-${p.id}" required><option value="">Pick</option>${opts}</select></label>`).join("")}</div>
