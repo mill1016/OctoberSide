@@ -857,9 +857,10 @@ setInterval(()=>{if(online)renderBoard();},60000);
    Bets go into a Google Form, which saves them to a Google Sheet. This page reads the sheet and does the math.
    Fill in BETS below with your form and sheet links (see README). Until then the tab shows example bets. */
 const BETS={
-  formAction:"",   // https://docs.google.com/forms/d/e/<FORM_ID>/formResponse
-  entries:{name:"",bret:"",travis:"",greg:"",target:"",at:"",comment:""}, // entry.123456 ids from a pre-filled link
-  sheetId:"",      // the long id in your Google Sheet's link
+  formAction:"https://docs.google.com/forms/d/e/1FAIpQLScACOwVB7GpDs6vbDVyay1MwpGtKvZRq08BbjAv8ylqDyyudw/formResponse",
+  entries:{name:"entry.1403541092",bret:"entry.1331513586",travis:"entry.1432790733",greg:"entry.831651769",target:"entry.474503794",at:"entry.715290870",comment:"entry.1785254360"},
+  sheetId:"1FERpZcTuoj73s7vhTfDZk8aLTsTde9U4z8HiojlPs5A",
+  sheetGid:"672817916",
   closes:"2026-10-24T14:00:00-05:00"
 };
 const betsReady=()=>!!(BETS.formAction&&BETS.sheetId&&BETS.entries.name);
@@ -878,7 +879,7 @@ function parseGviz(txt){
   const j=JSON.parse(txt.slice(txt.indexOf("{"),txt.lastIndexOf("}")+1));
   const cols=j.table.cols.map(c=>(c.label||"").toLowerCase());
   const find=(...keys)=>cols.findIndex(c=>keys.some(k=>c.includes(k)));
-  const ix={ts:find("timestamp"),name:find("your name","name"),bret:find("bret"),travis:find("travis","trav"),greg:find("greg"),target:find("heckle","who"),at:find("beer #","at beer","which beer"),comment:find("comment","message","say")};
+  const ix={ts:find("timestamp"),name:find("your name","name"),bret:find("bret"),travis:find("travis","trav"),greg:find("greg"),target:find("whom","heckle who"),at:find("which beer","beer #","at beer"),comment:find("write your","comment","heckel")};
   const val=(r,i)=>i<0||!r.c[i]?null:r.c[i].v;
   const date=v=>{const m=/Date\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(v||"");if(!m)return null;const p=n=>String(n).padStart(2,"0");
     return new Date(`${m[1]}-${p(+m[2]+1)}-${p(m[3])}T${p(m[4])}:${p(m[5])}:${p(m[6])}-05:00`);};
@@ -891,7 +892,7 @@ async function loadBets(force){
   betsLoadedAt=Date.now();
   if(!betsReady()){betsDemo=true;betRows=betRows&&betsDemo?betRows:demoBets();return renderBets();}
   try{
-    const r=await fetch(`https://docs.google.com/spreadsheets/d/${BETS.sheetId}/gviz/tq?tqx=out:json&t=${Date.now()}`,{cache:"no-store"});
+    const r=await fetch(`https://docs.google.com/spreadsheets/d/${BETS.sheetId}/gviz/tq?tqx=out:json&gid=${BETS.sheetGid}&t=${Date.now()}`,{cache:"no-store"});
     betRows=parseGviz(await r.text());betsDemo=false;
   }catch(e){if(!betRows)betRows=[];}
   renderBets();
