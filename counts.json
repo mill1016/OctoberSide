@@ -19,7 +19,13 @@
       "head": "images/heads/greg.png"
     }
   ],
-  "bars": {},
+  "bars": {
+    "mainstreet": {
+      "bret": 2,
+      "travis": 2,
+      "greg": 1
+    }
+  },
   "visits": {},
   "photos": {
     "home": {
@@ -27,6 +33,10 @@
       "greg": "images/crawl/home-greg-1792787033436.jpg"
     }
   },
-  "last": {},
+  "last": {
+    "bret": "2026-10-23T20:24:32.397Z",
+    "travis": "2026-10-23T20:24:32.998Z",
+    "greg": "2026-10-23T20:24:33.747Z"
+  },
   "extra": []
 }
