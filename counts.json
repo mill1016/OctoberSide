@@ -31,7 +31,11 @@
       "arrive": "2026-10-23T19:11:46.277Z"
     }
   },
-  "photos": {},
+  "photos": {
+    "mainstreet": {
+      "bret": "images/crawl/mainstreet-bret-1792782809919.jpg"
+    }
+  },
   "last": {
     "bret": "2026-10-23T19:13:12.258Z",
     "greg": "2026-10-23T19:11:50.809Z",
