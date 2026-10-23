@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Octoberside</title>
+<meta property="og:title" content="Octoberside · Sat Oct 24">
+<meta property="og:description" content="12 bars, Hopkins to Nordeast. 2 PM start, Grumpy's at close.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Octoberside">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1B2226">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#EEF0EF; --surface:#FFFFFF; --ink:#1B2226; --muted:#5B666B; --line:#D5DAD8;
+  --amber:#B8640E; --blue:#1F4A6E; --walk:#2E6B4F; --warn:#9C2F23;
+  --display:"Alfa Slab One",Rockwell,Georgia,serif;
+  --body:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#121618; --surface:#1B2125; --ink:#ECE7DE; --muted:#9AA5AA; --line:#2C353A;
+  --amber:#EBA548; --blue:#7FB2DB; --walk:#7CC4A0; --warn:#EE8B7C; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);
+  padding:calc(24px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:24px}
+.kicker{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+h1{font:400 clamp(34px,8vw,56px)/1 var(--display);margin:4px 0 8px}
+.sub{color:var(--muted);margin:0;max-width:62ch}
+#map{height:min(70vh,560px);border-radius:8px;border:1px solid var(--line)}
+.pin{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  font:600 13px var(--body);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.leaflet-popup-content{margin:12px 14px;font:14px/1.45 var(--body);min-width:220px}
+.pop img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;margin-bottom:8px;display:block}
+.pop b{font-size:16px;display:block}
+.pop .t{font:500 13px var(--mono);color:#B8640E}
+.pop .h{color:#5B666B;font-size:13px}
+.pop a{font-weight:600}
+h2{font:400 22px var(--display);margin:0 0 6px}
+ol{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+li{display:grid;grid-template-columns:36px 1fr auto;gap:2px 12px;padding:12px 14px;border-top:1px dashed var(--line);cursor:pointer}
+li:first-child{border-top:0}
+li .n{grid-row:span 2;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font:600 13px var(--body)}
+li .t{font:500 14px var(--mono);color:var(--amber);font-variant-numeric:tabular-nums}
+li .d{grid-column:2/4;color:var(--muted);font-size:14px}
+.cash{color:var(--warn);font-weight:600}
+footer{font:500 12px var(--mono);color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Sat Oct 24 · 2 PM start · 12 stops</div>
+    <h1>Octoberside</h1>
+    <p class="sub">Hover or tap a pin for details. Each bar links to its Google Maps page for photos and reviews.</p>
+  </header>
+
+  <div id="map"></div>
+
+  <section>
+    <h2>The tab</h2>
+    <ol id="list"></ol>
+  </section>
+
+  <footer>Bring cash for Knight Cap, Shaw's and Jimmy's. Nye's opens at 4. Hours are listed Saturday hours; Halloween weekend can change them.</footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// To add a photo to a pin, put an image in the images/ folder and set photo:"images/whatever.jpg"
+const stops=[
+ {n:"Mainstreet Bar & Grill",a:"814 Mainstreet, Hopkins",lat:44.9243129,lng:-93.4108628,t:"2:00 PM",h:"11 AM – 1 AM",note:"Kickoff in Hopkins.",photo:""},
+ {n:"Cuzzy's Grill & Bar",a:"507 N Washington Ave",lat:44.9862047,lng:-93.2752031,t:"3:15 PM",h:"8 AM – 2 AM",note:"Order the mystery shot.",photo:""},
+ {n:"Nye's Bar",a:"112 E Hennepin Ave",lat:44.9871605,lng:-93.2584696,t:"4:15 PM",h:"4 PM – 2 AM",note:"Opens at 4. Piano bar sing-alongs.",photo:""},
+ {n:"NE Moose Bar & Grill",a:"356 Monroe St NE",lat:44.9948258,lng:-93.2529192,t:"5:15 PM",h:"7 AM – 2 AM",note:"Park here and walk the rest. Dinner.",photo:""},
+ {n:"Northeast Yacht Club",a:"801 Marshall St NE",lat:44.9954177,lng:-93.2664124,t:"6:10 PM",h:"11 AM – 1 AM",note:"Pool and Golden Tee.",photo:""},
+ {n:"The 1029 Bar",a:"1029 Marshall St NE",lat:44.9981135,lng:-93.2683104,t:"7:05 PM",h:"10 AM – 2 AM",note:"Bras on the ceiling.",photo:""},
+ {n:"Dusty's Bar",a:"1319 Marshall St NE",lat:45.0007702,lng:-93.2701598,t:"8:00 PM",h:"11 AM – 2 AM",note:"Second round of food. Get the Dago.",photo:""},
+ {n:"Knight Cap Bar & Lounge",a:"1500 4th St NE",lat:45.0032356,lng:-93.26176,t:"8:55 PM",h:"10 AM – 2 AM",note:"Fish tank behind the bar.",cash:true,photo:""},
+ {n:"Shaw's Bar & Grill",a:"1528 University Ave NE",lat:45.004045,lng:-93.2634427,t:"9:50 PM",h:"11 AM – 1 AM",note:"Blues band likely on.",cash:true,photo:""},
+ {n:"Jimmy's Bar & Lounge",a:"1828 4th St NE",lat:45.0073544,lng:-93.2617596,t:"10:45 PM",h:"8 AM – 2 AM",note:"Cheapest, heaviest pours.",cash:true,photo:""},
+ {n:"Northeast Palace Bar & Grill",a:"2500 4th St NE",lat:45.013275,lng:-93.2617848,t:"11:40 PM",h:"10 AM – 1 AM",note:"Fire pits. Closes at 1.",photo:""},
+ {n:"Grumpy's Bar",a:"2200 4th St NE",lat:45.0101117,lng:-93.2618041,t:"12:35 AM",h:"12 PM – 2 AM",note:"The finale. Bring a clean ID.",photo:""}
+];
+const css=getComputedStyle(document.documentElement);
+const blue=css.getPropertyValue("--blue").trim()||"#1F4A6E", walk=css.getPropertyValue("--walk").trim()||"#2E6B4F";
+const gmaps=s=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(s.n+", "+s.a+", Minneapolis, MN");
+
+const map=L.map("map",{scrollWheelZoom:false});
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,
+  attribution:'Tiles &copy; Esri &mdash; Sources: Esri, HERE, Garmin, USGS, OpenStreetMap contributors'}).addTo(map);
+
+const pts=stops.map(s=>[s.lat,s.lng]);
+L.polyline(pts.slice(0,4),{color:"#1F4A6E",weight:4,opacity:.8}).addTo(map);
+L.polyline(pts.slice(3),{color:"#2E6B4F",weight:4,opacity:.8,dashArray:"6 8"}).addTo(map);
+
+const markers=stops.map((s,i)=>{
+  const color=i<3?"#1F4A6E":"#2E6B4F";
+  const icon=L.divIcon({className:"",html:`<div class="pin" style="background:${color}">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
+  const img=s.photo?`<img src="${s.photo}" alt="${s.n}" onerror="this.remove()">`:"";
+  const html=`<div class="pop">${img}<span class="t">${i+1} · ${s.t}</span><b>${s.n}</b>
+    <div class="h">${s.a} · Sat ${s.h}</div><div>${s.note}${s.cash?' <span style="color:#9C2F23;font-weight:600">Cash only.</span>':""}</div>
+    <a href="${gmaps(s)}" target="_blank" rel="noopener">Photos &amp; reviews ›</a></div>`;
+  const m=L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(html,{closeButton:true,autoPan:true});
+  m.on("mouseover",()=>m.openPopup());
+  return m;
+});
+map.fitBounds(L.latLngBounds(pts),{padding:[30,30]});
+
+const list=document.getElementById("list");
+stops.forEach((s,i)=>{
+  const li=document.createElement("li");
+  li.innerHTML=`<span class="n" style="background:${i<3?blue:walk}">${i+1}</span><strong>${s.n}</strong><span class="t">${s.t}</span>
+    <span class="d">${s.a} · Sat ${s.h}${s.cash?' · <span class="cash">Cash only</span>':""}</span>`;
+  li.onclick=()=>{map.setView([s.lat,s.lng],16);markers[i].openPopup();document.getElementById("map").scrollIntoView({behavior:"smooth"});};
+  list.append(li);
+});
+if("serviceWorker" in navigator && location.protocol==="https:"){navigator.serviceWorker.register("sw.js");}
+</script>
+</body>
+</html>
