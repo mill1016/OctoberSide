@@ -19,13 +19,23 @@
       "head": "images/heads/greg.png"
     }
   ],
-  "bars": {},
+  "bars": {
+    "mainstreet": {
+      "bret": 1,
+      "greg": 2,
+      "travis": 1
+    }
+  },
   "visits": {
     "mainstreet": {
       "arrive": "2026-10-23T19:11:46.277Z"
     }
   },
   "photos": {},
-  "last": {},
+  "last": {
+    "bret": "2026-10-23T19:11:47.842Z",
+    "greg": "2026-10-23T19:11:50.809Z",
+    "travis": "2026-10-23T19:11:51.410Z"
+  },
   "extra": []
 }
