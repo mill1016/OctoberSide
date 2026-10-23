@@ -161,7 +161,11 @@ h3{font:600 15px var(--cond);letter-spacing:.08em;text-transform:uppercase;color
 .by{color:var(--muted);font-size:13px}
 .mapbtns{display:flex;gap:8px;margin-top:12px}
 .mapbtns .btn{flex:1;padding:8px;font-size:15px}
-#map{margin-top:8px}
+#map{margin-top:8px;position:relative;z-index:0;isolation:isolate}
+.sheet{z-index:1000}
+.tabs{z-index:900}
+.ride{z-index:950}
+.adminbar{z-index:900}
 .here{color:var(--walk);font-weight:600}
 .mk{position:relative;width:28px;height:28px}
 .mk .pin{position:absolute;inset:0}
@@ -330,8 +334,7 @@ function allStops(){
   const ex=(state&&state.extra)||[];
   const out=[];
   const place=id=>ex.filter(e=>e.after===id).forEach(e=>{out.push({...e,extra:true,short:e.n.length>14?e.n.slice(0,13)+"…":e.n});place(e.id);});
-  out.push(homeStop);
-  place("__start");place("home");
+  place("__start");
   stops.forEach(s=>{out.push(s);place(s.id);});
   ex.filter(e=>!out.some(o=>o.id===e.id)).forEach(e=>out.push({...e,extra:true,short:e.n}));
   return out;
@@ -492,6 +495,8 @@ function initMap(){
   L.polyline([[homeStop.lat,homeStop.lng],...pts.slice(0,4)],{color:"#3B6E96",weight:4,opacity:.7}).addTo(map);
   L.polyline(pts.slice(3),{color:"#2E6B4F",weight:4,opacity:.7,dashArray:"6 8"}).addTo(map);
   markerLayer=L.layerGroup().addTo(map);
+  L.marker([homeStop.lat,homeStop.lng],{icon:L.divIcon({className:"",iconSize:[28,28],iconAnchor:[14,14],html:`<div class="mk"><div class="pin" style="background:#ECEFF0">H</div></div>`})})
+    .addTo(map).bindTooltip("<b>Home base</b><br>Where it all starts",{direction:"top",offset:[0,-18]});
   map.on("zoomend",updateMap);
   centerMap(); updateMap();
 }
@@ -500,7 +505,7 @@ function centerMap(whole){
   if(!map)return;
   const cur=crawlStarted()?currentBar():null;
   if(!whole&&cur&&cur.lat!=null){map.setView([cur.lat,cur.lng],FACE_ZOOM);mapCentered=true;}
-  else map.fitBounds(L.latLngBounds(mapStops().map(s=>[s.lat,s.lng])),{padding:[24,24]});
+  else map.fitBounds(L.latLngBounds([...mapStops().map(s=>[s.lat,s.lng]),[homeStop.lat,homeStop.lng]]),{padding:[24,24]});
 }
 function updateMap(){
   if(!map||!markerLayer)return;
@@ -578,7 +583,7 @@ const visit=bar=>state&&state.visits&&state.visits[bar]||{};
 const photoPath=(bar,pid)=>state&&state.photos&&state.photos[bar]&&state.photos[bar][pid];
 const photoURL=p=>!p?null:/^(https?:|data:)/.test(p)?p:`https://raw.githubusercontent.com/${REPO.owner}/${REPO.repo}/${REPO.branch}/${p}`;
 const barPhoto=(bar,pid)=>localPhotos[bar+"/"+pid]||photoURL(photoPath(bar,pid));
-const latestPhoto=pid=>{const a=actual();for(const s of [...a.reverse(),...allStops().reverse()]){const u=barPhoto(s.id,pid);if(u)return u;}return null;};
+const latestPhoto=pid=>{const a=actual();for(const s of [...a.reverse(),...allStops().reverse()]){const u=barPhoto(s.id,pid);if(u)return u;}return barPhoto("home",pid);};
 const b64e=t=>btoa(unescape(encodeURIComponent(t))), b64d=t=>decodeURIComponent(escape(atob(t.replace(/\n/g,""))));
 const hdr=()=>Object.assign({Accept:"application/vnd.github+json"},token?{Authorization:"Bearer "+token}:{});
 const clock=iso=>iso?new Date(iso).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
@@ -602,9 +607,10 @@ function renderBoard(){
   const where=online&&v.arrive?(v.depart?`Last stop: ${cur.short}, left ${clock(v.depart)}.`:`At ${cur.short} since ${clock(v.arrive)}.`):"";
   const wl=document.getElementById("whereLine"); if(wl)wl.innerHTML=where?`<b class="here">${where}</b> Faces and beers show at each bar we've hit.`:"Live map. Faces and beers pop up at each bar as we go.";
   document.getElementById("board").innerHTML=`<div class="hd"><b>The contenders</b><span class="live ${online?"":"off"}">${online?(lagging?"● Live · may lag a few min":"● Live count"):"Live count starts Saturday"} <button class="refresh" id="refresh" type="button" aria-label="Refresh">↻</button></span></div>
+  ${admin?`<div class="sm2" style="margin-top:4px">Tap a face to set his starting photo.</div>`:""}
   ${(()=>{const h=msHits();const last=h[h.length-1];return last?`<div class="banner"><div class="bn">Latest milestone · ${last.bar.short}</div><p>${last.t}</p></div>`:"";})()}
   ${ps.map(p=>{const c=total(p.id),last=state&&state.last&&state.last[p.id];
-    return `<div class="guy">${faceHTML(p,latestPhoto(p.id),"face")}
+    return `<div class="guy">${admin?`<button class="snap" type="button" data-snap="home" data-pid="${p.id}" aria-label="Starting photo of ${p.name}">${faceHTML(p,latestPhoto(p.id),"face")}</button>`:faceHTML(p,latestPhoto(p.id),"face")}
       <div class="who"><span class="nm">${p.name}</span><span class="sm">${last?"Last beer "+ago(last):"Projected "+p.proj}</span></div>
       <span class="cnt">${c}<small>/24</small></span>
       <div class="row24" aria-label="${c} of 24 beers">${Array.from({length:24},(_,k)=>k<c?'<img src="images/beer.png" alt="">':'<img class="e" src="images/beer.png" alt="">').join("")}</div>
@@ -734,7 +740,7 @@ const cam=document.createElement("input");cam.type="file";cam.accept="image/*";c
 let camTarget=null;
 cam.addEventListener("change",async()=>{
   const f=cam.files&&cam.files[0];cam.value="";if(!f||!camTarget)return;
-  const {bar,pid}=camTarget, p=people().find(x=>x.id===pid), s=allStops().find(x=>x.id===bar);
+  const {bar,pid}=camTarget, p=people().find(x=>x.id===pid), s=allStops().find(x=>x.id===bar)||{...homeStop,short:"the start"};
   try{
     setStatus(`Uploading ${p.name}'s photo…`);
     const url=URL.createObjectURL(f), img=await new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=url;});
@@ -970,7 +976,7 @@ function renderBets(){
     ${betsDemo?`<div class="banner"><div class="bn">Example bets</div><p>These are made up so you can see how it works. Real bets show here once the betting form is connected.</p></div>`:""}
     <div class="key"><span><i style="background:var(--g)"></i>Up to the crowd's average</span><span><i style="background:linear-gradient(90deg,var(--g),var(--r))"></i>Fading over 1 std dev</span><span><i style="background:var(--r)"></i>Nobody believes in you</span></div>
     ${ps.map(p=>{const st=statsFor(p.id);return `<div class="betcard">
-      <div class="bh">${faceHTML(p,latestPhoto(p.id))}<div><b>${p.name}</b><span>${st?`${st.n} bet${st.n===1?"":"s"} · ±${st.sd.toFixed(1)}`:"No bets yet"}</span></div></div>
+      <div class="bh">${token?`<button class="snap" type="button" data-snap="home" data-pid="${p.id}" aria-label="Starting photo of ${p.name}">${faceHTML(p,latestPhoto(p.id))}</button>`:faceHTML(p,latestPhoto(p.id))}<div><b>${p.name}</b><span>${st?`${st.n} bet${st.n===1?"":"s"} · ±${st.sd.toFixed(1)}`:"No bets yet"}</span></div></div>
       ${st?trackHTML(p,st,state?total(p.id):null)+`<p class="vd">${verdict(p,st,state?total(p.id):null)}</p>`:""}</div>`;}).join("")}
     ${open&&!betsDemo?formHTML(ps):open&&betsDemo?`<p class="sub" style="margin-top:16px">The betting form appears here once it's connected.</p>`:""}
     <h3>Heckles</h3>
