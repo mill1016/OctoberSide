@@ -153,6 +153,9 @@ h3{font:600 15px var(--cond);letter-spacing:.08em;text-transform:uppercase;color
 .betform{background:var(--panel);border-radius:12px;padding:14px;display:grid;gap:10px}
 .betform label{display:grid;gap:4px;font:600 15px var(--cond);color:var(--muted)}
 .betform input,.betform select{padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:16px var(--body)}
+.fhead{margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+.fhead b{display:block;font:700 20px var(--cond);color:var(--ink)}
+.fhead span{color:var(--muted);font-size:14px}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
 .list li.locked{color:var(--muted);font-style:italic}
 .by{color:var(--muted);font-size:13px}
@@ -444,7 +447,7 @@ function buildTabs(){
   const list=allStops(), key=list.map(s=>s.id).join("|");
   if(key===builtKey)return false;
   builtKey=key;
-  views=[{id:"daybefore",label:"Day Before"},{id:"route",label:"Route"},{id:"bets",label:"Bets"},...list.map(s=>({id:s.id,label:label(s)}))];
+  views=[{id:"daybefore",label:"Day Before"},{id:"bets",label:"Bets"},{id:"route",label:"Route"},...list.map(s=>({id:s.id,label:label(s)}))];
   tabs.innerHTML="";
   views.forEach(v=>{
     const b=document.createElement("button");
@@ -959,12 +962,13 @@ function leaderHTML(ps,bets){
 function formHTML(ps){
   const opts=Array.from({length:25},(_,k)=>`<option value="${k}">${k}</option>`).join("");
   return `<h3>Place your bet</h3><form class="betform" id="betform">
-    <label>Your name<input id="bName" required maxlength="40" autocomplete="given-name"></label>
-    <div class="bgrid">${ps.map(p=>`<label>${p.name}<select id="b-${p.id}" required><option value="">–</option>${opts}</select></label>`).join("")}</div>
-    <h3 style="margin-top:14px">Leave a heckle (optional)</h3>
-    <div class="bgrid"><label>For<select id="hWho"><option value="">–</option>${ps.map(p=>`<option value="${p.name}">${p.name}</option>`).join("")}</select></label>
-      <label>Unlocks at beer<select id="hAt"><option value="">–</option>${opts}</select></label></div>
-    <label>Heckle<input id="hText" maxlength="140" placeholder="Greg, the couch misses you."></label>
+    <label>Your name<input id="bName" required maxlength="40" autocomplete="given-name" placeholder="So we know who to brag about"></label>
+    <div class="fhead"><b>How many beers until they quit?</b><span>Pick a number from 0 to 24 for each guy.</span></div>
+    <div class="bgrid">${ps.map(p=>`<label>${p.name}<select id="b-${p.id}" required><option value="">Pick</option>${opts}</select></label>`).join("")}</div>
+    <div class="fhead"><b>Leave a heckle (optional)</b><span>It stays hidden until he hits the beer you pick, then pops up for everyone.</span></div>
+    <div class="bgrid"><label>Who's it for?<select id="hWho"><option value="">Pick a guy</option>${ps.map(p=>`<option value="${p.name}">${p.name}</option>`).join("")}</select></label>
+      <label>Show it at beer #<select id="hAt"><option value="">Pick</option>${opts}</select></label></div>
+    <label>Your heckle<input id="hText" maxlength="140" placeholder="Greg, the couch misses you."></label>
     <div class="err" id="betErr"></div>
     <button class="btn primary" type="submit" style="width:100%">Lock in my bet</button></form>`;
 }
