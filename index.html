@@ -183,7 +183,7 @@ h3{font:600 15px var(--cond);letter-spacing:.08em;text-transform:uppercase;color
 .row24 img.e{opacity:.13;filter:grayscale(1)}
 .row24 img:nth-child(6n):not(:last-child){border-right:1.5px solid var(--line);padding-right:2px}
 .dcard.pick{border:1.5px solid var(--walk)}
-.dcard.pick h3{color:var(--walk)}
+.dcard.pick h3{color:var(--walk);margin:0}
 .dcard{background:var(--panel);border-radius:12px;padding:14px 16px;margin-top:14px}
 .dcard h3{margin:0 0 6px;color:var(--amber)}
 .dcard p{margin:0 0 10px}
@@ -368,8 +368,7 @@ const packList=[
  ["pedia","Pedialyte for Sunday morning","Future you says thanks."]
 ];
 db.innerHTML=`<h2>The day before</h2><p class="sub">Saturday's a marathon. Here's how to show up ready.</p>
-  <div class="dcard pick"><h3>Scott will pick you up</h3>
-    <p>Sit tight. We meet at home base in Edina, then head to Mainstreet in Hopkins.</p></div>
+  <div class="dcard pick"><h3>Scott will pick you up at your house</h3></div>
   <div class="dcard"><h3>Get your bets in</h3>
     <p>Wives, moms, dads and boyfriends: bet how many beers Bret, Travis and Greg each finish, and leave a heckle that unlocks when they hit that beer.</p>
     <p class="cd" id="dbCountdown"></p>
@@ -388,7 +387,7 @@ db.innerHTML=`<h2>The day before</h2><p class="sub">Saturday's a marathon. Here'
     <div class="checks">${packList.map(([k,t,d])=>`<label class="chk"><input type="checkbox" data-pack="${k}"><span><b>${t}</b><small>${d}</small></span></label>`).join("")}</div></div>
   <div class="dcard"><h3>Know the plan</h3>
     <ul class="list">
-      <li><b>Scott picks you up.</b> We start at home base in Edina.</li>
+      <li><b>Scott will pick you up at your house.</b></li>
       <li>First bar: <b>Mainstreet in Hopkins</b>.</li>
       <li>Nobody who's drinking drives.</li>
       <li>Nye's opens at 4 PM. Don't show up early.</li>
@@ -409,7 +408,7 @@ panels.append(bp);
 function barPanelHTML(s,list){
   const i=list.indexOf(s), prev=list[i-1], next=list[i+1];
   const head=`<div class="bar-head"><span class="num" style="background:${legColor(s)}">${numOf(s)}</span>
-      <div><h2>${s.n}</h2><p class="sub">${s.home?"Where it all starts. Scott does the pickups, we regroup here, then Mainstreet.":s.extra?"Off-plan stop. The night had other ideas.":s.tag}</p></div></div>
+      <div><h2>${s.n}</h2><p class="sub">${s.home?"Where it all starts.":s.extra?"Off-plan stop. The night had other ideas.":s.tag}</p></div></div>
     <div id="msb-${s.id}"></div>
     <div id="visit-${s.id}"></div>
     <div class="left" id="left-${s.id}" hidden></div>`;
@@ -520,8 +519,8 @@ function updateMap(){
       html:`<div class="mk${isCur?" cur":""}${skipped(s)?" skip":""}"><div class="pin" style="background:${color}">${num}</div>${deco}</div>`});
     const v=visitOf(s.id), times=[v.arrive?"in "+clock(v.arrive):"",v.depart?"out "+clock(v.depart):""].filter(Boolean).join(" · ");
     const m=L.marker([s.lat,s.lng],{icon,zIndexOffset:isCur?1000:been?500:0}).addTo(markerLayer)
-      .bindPopup(`<b>${s.extra||s.home?"":num+". "}${s.n}</b><br>${s.home?"Where it all starts":s.extra?"Off-plan stop":"Sat "+s.h}${times?"<br>"+times:""}${been?"<br>"+ps.map(p=>`${p.name} ${atBar(s.id,p.id)}`).join(" · "):""}<br><a href="#${s.id}" data-go="${s.id}">Open tab ›</a>`);
-    m.on("mouseover",()=>m.openPopup());
+      .bindTooltip(`<b>${s.extra||s.home?"":num+". "}${s.n}</b><br>${s.home?"Where it all starts":s.extra?"Off-plan stop":"Sat "+s.h}${times?"<br>"+times:""}${been?"<br>"+ps.map(p=>`${p.name} ${atBar(s.id,p.id)}`).join(" · "):""}<br><span style="color:#888">Tap to open</span>`,{direction:"top",offset:[0,-18]});
+    m.on("click",()=>show(s.id,true));
   });
 }
 document.addEventListener("click",e=>{if(e.target.id==="mapHere")centerMap();if(e.target.id==="mapAll")centerMap(true);});
@@ -808,22 +807,26 @@ function openAddStop(){
   };
 }
 
-// Scorekeeper reset: clears beers, times, bar photos and added stops. Bets live in the Google Sheet and aren't touched.
+// Scorekeeper reset: by default only the beer counts. Bets live in the Google Sheet and are never touched.
 function openReset(){
   const sh=document.createElement("div");sh.className="sheet";
+  const opt=(id,label,on)=>`<label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input id="${id}" type="checkbox" ${on?"checked":""} style="width:auto;margin:0"> ${label}</label>`;
   sh.innerHTML=`<div class="card"><h2 style="font-size:24px">Reset the scoreboard?</h2>
-    <p class="sub">Clears every beer, arrive and leave time, bar photo and added stop. Bets and heckles stay; they live in the Google Sheet.</p>
-    <label style="display:flex;gap:8px;align-items:center;margin:12px 0"><input id="keepHome" type="checkbox" checked style="width:auto;margin:0"> Keep the home base photos</label>
+    <p class="sub">Choose what to clear. Bets and heckles always stay; they live in the Google Sheet.</p>
+    ${opt("rsBeers","Beer counts",true)}${opt("rsTimes","Arrive and leave times",false)}${opt("rsPhotos","Photos",false)}${opt("rsStops","Added off-plan stops",false)}
+    <div class="err" id="rsErr"></div>
     <div class="row2"><button class="btn" type="button" id="rsCancel">Cancel</button><button class="btn" type="button" id="rsOk" style="background:var(--warn);color:#2A0E09;border-color:var(--warn)">Reset</button></div></div>`;
   document.body.append(sh);
   sh.querySelector("#rsCancel").onclick=()=>sh.remove();
-  const ok=sh.querySelector("#rsOk");
+  const ok=sh.querySelector("#rsOk"), on=id=>sh.querySelector("#"+id).checked;
   ok.onclick=()=>{
+    if(!["rsBeers","rsTimes","rsPhotos","rsStops"].some(on)){sh.querySelector("#rsErr").textContent="Tick at least one thing to clear.";return;}
     if(!ok.dataset.sure){ok.dataset.sure=1;ok.textContent="Tap again to reset";return;}
     ensureState();
-    const keep=sh.querySelector("#keepHome").checked&&state.photos.home?{home:state.photos.home}:{};
-    state.bars={};state.visits={};state.last={};state.extra=[];state.photos=keep;
-    Object.keys(localPhotos).forEach(k=>{if(!(keep.home&&k.startsWith("home/")))delete localPhotos[k];});
+    if(on("rsBeers")){state.bars={};state.last={};}
+    if(on("rsTimes"))state.visits={};
+    if(on("rsPhotos")){state.photos={};Object.keys(localPhotos).forEach(k=>delete localPhotos[k]);}
+    if(on("rsStops")){const ids=state.extra.map(x=>x.id);state.extra=[];ids.forEach(id=>{delete state.bars[id];delete state.visits[id];delete state.photos[id];});}
     sh.remove();current="route";renderAll();show("route",true);queueSave();setStatus("Scoreboard reset");
   };
 }

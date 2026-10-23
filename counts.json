@@ -1,32 +1,11 @@
 {
   "people": [
-    {
-      "id": "bret",
-      "name": "Bret",
-      "proj": 24,
-      "head": "images/heads/bret.png"
-    },
-    {
-      "id": "travis",
-      "name": "Travis",
-      "proj": 20,
-      "head": "images/heads/travis.png"
-    },
-    {
-      "id": "greg",
-      "name": "Greg",
-      "proj": 18,
-      "head": "images/heads/greg.png"
-    }
+    {"id": "bret", "name": "Bret", "proj": 24, "head": "images/heads/bret.png"},
+    {"id": "travis", "name": "Travis", "proj": 20, "head": "images/heads/travis.png"},
+    {"id": "greg", "name": "Greg", "proj": 18, "head": "images/heads/greg.png"}
   ],
   "bars": {},
   "visits": {},
-  "photos": {
-    "home": {
-      "bret": "images/crawl/home-bret-1792787027639.jpg",
-      "greg": "images/crawl/home-greg-1792787033436.jpg"
-    }
-  },
-  "last": {},
-  "extra": []
+  "photos": {},
+  "last": {}
 }
