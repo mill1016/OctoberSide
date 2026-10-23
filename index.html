@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Octoberside</title>
 <meta property="og:title" content="Octoberside · Sat Oct 24">
-<meta property="og:description" content="12 bars, Hopkins to Nordeast. 2 PM start, Grumpy's at close.">
+<meta property="og:description" content="12 bars, Hopkins to Nordeast, Grumpy's at close.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -13,116 +13,856 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Octoberside">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1B2226">
+<meta name="theme-color" content="#181D21">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
 :root{
-  --bg:#EEF0EF; --surface:#FFFFFF; --ink:#1B2226; --muted:#5B666B; --line:#D5DAD8;
-  --amber:#B8640E; --blue:#1F4A6E; --walk:#2E6B4F; --warn:#9C2F23;
-  --display:"Alfa Slab One",Rockwell,Georgia,serif;
+  --bg:#181D21; --panel:#20272C; --panel-2:#283036; --line:#343D44;
+  --ink:#ECEFF0; --muted:#9CA6AC; --amber:#EBA548; --amber-ink:#1A1408;
+  --blue:#7FB2DB; --walk:#7CC4A0; --warn:#F08C7E;
+  --cond:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --body:"Barlow","Helvetica Neue",Arial,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  color-scheme:light;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#121618; --surface:#1B2125; --ink:#ECE7DE; --muted:#9AA5AA; --line:#2C353A;
-  --amber:#EBA548; --blue:#7FB2DB; --walk:#7CC4A0; --warn:#EE8B7C; color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);
-  padding:calc(24px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
-.wrap{max-width:860px;margin:0 auto;display:grid;gap:24px}
-.kicker{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
-h1{font:400 clamp(34px,8vw,56px)/1 var(--display);margin:4px 0 8px}
-.sub{color:var(--muted);margin:0;max-width:62ch}
-#map{height:min(70vh,560px);border-radius:8px;border:1px solid var(--line)}
-.pin{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;
-  font:600 13px var(--body);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
-.leaflet-popup-content{margin:12px 14px;font:14px/1.45 var(--body);min-width:220px}
-.pop img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;margin-bottom:8px;display:block}
-.pop b{font-size:16px;display:block}
-.pop .t{font:500 13px var(--mono);color:#B8640E}
-.pop .h{color:#5B666B;font-size:13px}
-.pop a{font-weight:600}
-h2{font:400 22px var(--display);margin:0 0 6px}
-ol{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:8px}
-li{display:grid;grid-template-columns:36px 1fr auto;gap:2px 12px;padding:12px 14px;border-top:1px dashed var(--line);cursor:pointer}
-li:first-child{border-top:0}
-li .n{grid-row:span 2;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font:600 13px var(--body)}
-li .t{font:500 14px var(--mono);color:var(--amber);font-variant-numeric:tabular-nums}
-li .d{grid-column:2/4;color:var(--muted);font-size:14px}
-.cash{color:var(--warn);font-weight:600}
-footer{font:500 12px var(--mono);color:var(--muted)}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);-webkit-text-size-adjust:100%}
+.page{max-width:720px;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+h1{font:700 40px/1 var(--cond);margin:0 0 8px;letter-spacing:.01em}
+.lede{color:var(--muted);margin:0 0 14px}
+.rule{height:2px;background:var(--ink);opacity:.9;margin:0}
+
+/* Tabs */
+.tabs{position:sticky;top:0;z-index:20;background:var(--bg);margin:0 calc(-1*max(20px,env(safe-area-inset-right))) 0 calc(-1*max(20px,env(safe-area-inset-left)));
+  padding:10px max(20px,env(safe-area-inset-left)) 10px;padding-top:calc(10px + env(safe-area-inset-top));border-bottom:1px solid var(--line);
+  display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:600 18px var(--cond);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.tab .k{font-size:13px;opacity:.75;margin-right:4px}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.tab:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+section[role="tabpanel"]{padding-top:22px}
+h2{font:700 30px/1.05 var(--cond);margin:0 0 6px}
+h3{font:600 15px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.sub{color:var(--muted);margin:0}
+
+/* Route */
+#map{height:min(58vh,440px);border-radius:12px;border:1px solid var(--line);margin-top:14px;background:var(--panel)}
+.pin{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#10161A;font:700 14px var(--cond);border:2px solid #10161A;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.leaflet-popup-content{font:14px/1.4 var(--body);margin:10px 12px}
+.leaflet-popup-content a{font-weight:600}
+.table{background:var(--panel);border-radius:12px;overflow:hidden;margin-top:14px}
+.row{display:grid;grid-template-columns:34px 1fr auto;gap:2px 12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;text-align:left;font:inherit}
+.row:first-child{border-top:0}
+.row:hover{background:var(--panel-2)}
+.num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 15px var(--cond);color:#10161A}
+.row .nm{font-weight:600}
+.row .tm{font:600 17px var(--cond);color:var(--amber);font-variant-numeric:tabular-nums}
+.row .ad{grid-column:2/4;color:var(--muted);font-size:14px}
+.contest{background:var(--panel);border-radius:12px;padding:16px;margin-top:4px}
+.contest .hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.contest .hd b{font:700 22px var(--cond)}
+.contest .hd span{color:var(--muted);font-size:14px}
+.guy{display:grid;grid-template-columns:72px 1fr auto;gap:4px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.guy:first-of-type{border-top:0}
+.guy .nm{font:700 20px var(--cond)}
+.guy .pr{font:700 20px var(--cond);color:var(--amber);font-variant-numeric:tabular-nums}
+.guy .ds{grid-column:1/4;color:var(--muted);font-size:14px}
+.meter{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;min-width:0}
+.meter i{height:14px;border-radius:2px;background:var(--panel-2)}
+.meter i.on{background:var(--amber)}
+.meter i.on.end{background:var(--warn)}
+.meter i.win{background:var(--walk)}
+.ms{display:block;margin-top:4px;color:var(--amber);font-style:italic}
+.banner{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(235,165,72,.12);border-left:3px solid var(--amber)}
+.banner .bn{font:700 13px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+.banner p{margin:2px 0 0}
+.guy{grid-template-columns:52px 1fr auto}
+.head{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--panel-2);display:grid;place-items:center;font:700 18px var(--cond);color:var(--ink);overflow:hidden;flex:0 0 auto}
+.guy .who{display:flex;flex-direction:column;min-width:0}
+.guy .cnt{font:700 34px/1 var(--cond);color:var(--amber);font-variant-numeric:tabular-nums;text-align:right}
+.guy .cnt small{font-size:15px;color:var(--muted);font-weight:600}
+.guy .meter{grid-column:2/4}
+.guy .ds{grid-column:1/4}
+.meter i.proj{box-shadow:inset 0 0 0 1.5px var(--muted)}
+.ctl{grid-column:1/4;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.ctl .btn{padding:14px;font-size:20px}
+.ctl .plus{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.live{font:600 13px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--walk)}
+.live.off{color:var(--muted)}
+.left{margin-top:14px;background:var(--panel);border-radius:12px;padding:12px 14px}
+.left .ttl{font:600 13px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.left .heads{display:grid;gap:10px}
+.left .h{display:grid;grid-template-columns:40px 44px 40px 1fr auto;align-items:center;gap:6px}
+.mugs{display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-end;height:44px;gap:2px 1px}
+.mugs.r{align-content:flex-start}
+.mugs img{height:20px;width:auto;display:block}
+.left .h .nm2{font:600 17px var(--cond);min-width:0}
+.left .h .nm2 small{display:block;color:var(--muted);font:500 13px var(--body)}
+.left .h b{font:700 28px var(--cond);color:var(--amber);font-variant-numeric:tabular-nums}
+.mini{display:flex;gap:10px;margin-top:6px}
+.mini .h{display:flex;align-items:center;gap:4px;font:600 14px var(--cond);color:var(--ink)}
+.mini .head{width:22px;height:22px;font-size:11px}
+.face{width:56px;height:56px;border-radius:50%;object-fit:cover;background:var(--panel-2);display:grid;place-items:center;font:700 22px var(--cond);color:var(--ink)}
+.guy{grid-template-columns:64px 1fr auto}
+.guy .sm{color:var(--muted);font-size:13px}
+.grid24{grid-column:1/4;display:grid;grid-template-columns:repeat(6,1fr);gap:4px 6px;padding:8px 10px;background:var(--bg);border-radius:10px}
+.grid24 img{height:30px;width:auto;justify-self:center}
+.grid24 img.e{opacity:.13;filter:grayscale(1)}
+.where{color:var(--walk);font:600 15px var(--cond);margin-top:4px}
+.visit{margin-top:14px;background:var(--panel);border-radius:12px;padding:12px 14px}
+.visit .vt{font:600 18px var(--cond)}
+.visit .actions{margin-top:10px}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.snap{border:0;padding:0;background:none;cursor:pointer;border-radius:50%;outline-offset:2px}
+.snap .head{box-shadow:0 0 0 2px var(--amber)}
+.left .h .ctl.sm{grid-column:1/6;margin-top:2px}
+.left .h .ctl.sm .btn{padding:8px;font-size:17px}
+.tml{display:block;color:var(--walk);font-size:13px}
+.tml:empty{display:none}
+.mini img.head,.mini span.head{width:22px;height:22px;font-size:11px}
+.refresh{background:none;border:1px solid var(--line);color:var(--ink);border-radius:999px;width:28px;height:28px;font-size:15px;margin-left:6px;cursor:pointer;vertical-align:middle}
+.ride{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));z-index:40;border:0;border-radius:999px;padding:10px 16px;
+  background:var(--warn);color:#2A0E09;font:700 16px var(--cond);letter-spacing:.02em;box-shadow:0 4px 14px rgba(0,0,0,.45);cursor:pointer}
+.row.skip{opacity:.45}
+.row.skip .nm{text-decoration:line-through}
+.tab.skip{opacity:.4;text-decoration:line-through}
+:root{--g:#2F7D52;--r:#A8433A}
+.betcard{background:var(--panel);border-radius:12px;padding:14px;margin-top:12px}
+.bh{display:flex;gap:10px;align-items:center}
+.bh b{font:700 22px var(--cond);display:block;line-height:1}
+.bh span{color:var(--muted);font-size:13px}
+.track{position:relative;margin:14px 8px 0}
+.track .dots{position:relative}
+.track .dot{position:absolute;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--ink);opacity:.85}
+.track .barwrap{position:relative;height:22px;margin-top:4px}
+.track .bar{position:absolute;inset:0;border-radius:6px}
+.track .mean{position:absolute;top:-6px;bottom:-6px;width:2px;margin-left:-1px;background:var(--ink)}
+.track .livept{position:absolute;top:50%;height:34px;transform:translate(-50%,-55%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.7))}
+.track .ticks,.track .meanrow{position:relative;height:16px;margin-top:4px}
+.track .ticks span{position:absolute;transform:translateX(-50%);font:500 11px var(--body);color:var(--muted)}
+.track .meanrow{height:20px;margin-top:2px}
+.track .meanrow span{position:absolute;transform:translateX(-50%);font:700 13px var(--cond);background:var(--ink);color:var(--bg);padding:0 6px;border-radius:4px;white-space:nowrap}
+.vd .now{color:var(--amber)}
+.vd{margin:10px 0 0;font-size:14px;color:var(--muted)}
+.vd b{color:var(--ink)}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:13px;color:var(--muted)}
+.key span{display:flex;align-items:center;gap:6px}
+.key i{width:22px;height:10px;border-radius:3px;display:inline-block}
+.betform{background:var(--panel);border-radius:12px;padding:14px;display:grid;gap:10px}
+.betform label{display:grid;gap:4px;font:600 15px var(--cond);color:var(--muted)}
+.betform input,.betform select{padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:16px var(--body)}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.list li.locked{color:var(--muted);font-style:italic}
+.by{color:var(--muted);font-size:13px}
+.adminbar{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));margin-top:20px;background:var(--panel-2);border:1px solid var(--amber);border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}
+.adminbar b{color:var(--amber);font:700 15px var(--cond);letter-spacing:.06em;text-transform:uppercase}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:20px}
+.sheet .card{background:var(--panel);border-radius:14px;padding:18px;max-width:420px;width:100%}
+.sheet input{width:100%;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:15px var(--body);margin:10px 0}
+.sheet .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.err{color:var(--warn);font-size:14px;min-height:1.2em}
+.rules{background:var(--panel);border-radius:12px;padding:14px 16px;margin:0}
+.rules li{margin:4px 0 4px 18px}
+
+/* Bar tab */
+.bar-head{display:flex;gap:14px;align-items:flex-start}
+.bar-head .num{width:44px;height:44px;font-size:22px;flex:0 0 auto}
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
+.fact{background:var(--panel);border-radius:10px;padding:10px 12px;min-width:0}
+.fact .l{font:600 12px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fact .v{font:600 20px/1.15 var(--cond);font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{font:600 14px var(--cond);letter-spacing:.04em;padding:3px 10px;border-radius:999px;background:var(--panel-2);color:var(--ink)}
+.chip.cash{background:rgba(240,140,126,.15);color:var(--warn)}
+.chip.food{background:rgba(124,196,160,.15);color:var(--walk)}
+.gallery{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:16px;scrollbar-width:none}
+.gallery::-webkit-scrollbar{display:none}
+.gallery img{flex:0 0 86%;max-width:86%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;scroll-snap-align:start;background:var(--panel)}
+.nophoto{margin-top:16px;border:1.5px dashed var(--line);border-radius:12px;padding:20px;text-align:center;color:var(--muted)}
+.nophoto a{color:var(--amber);font-weight:600;text-decoration:none}
+.list{background:var(--panel);border-radius:12px;padding:6px 16px;margin:0;list-style:none}
+.list li{padding:10px 0;border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.list b{font-weight:600}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:10px;font:600 17px var(--cond);text-decoration:none;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);cursor:pointer}
+.btn.primary{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.pager{display:flex;justify-content:space-between;gap:8px;margin-top:24px}
+.pager .btn{flex:1}
+.pager .btn[disabled]{opacity:.35;pointer-events:none}
+
+
+@media (prefers-reduced-motion:no-preference){.tab,.btn,.row{transition:background .15s,color .15s}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="kicker">Sat Oct 24 · 2 PM start · 12 stops</div>
-    <h1>Octoberside</h1>
-    <p class="sub">Hover or tap a pin for details. Each bar links to its Google Maps page for photos and reviews.</p>
-  </header>
-
-  <div id="map"></div>
-
-  <section>
-    <h2>The tab</h2>
-    <ol id="list"></ol>
-  </section>
-
-  <footer>Bring cash for Knight Cap, Shaw's and Jimmy's. Nye's opens at 4. Hours are listed Saturday hours; Halloween weekend can change them.</footer>
+<div class="page">
+  <h1>Octoberside</h1>
+  <p class="lede">Twelve bars, Hopkins to Nordeast. Saturday, Oct 24. Finish at Grumpy's when they close.</p>
+  <div class="rule"></div>
+  <nav class="tabs" role="tablist" id="tabs" aria-label="Crawl stops"></nav>
+  <main id="panels"></main>
 </div>
+<button class="ride" id="ride" type="button">Tapped out? Get a ride</button>
+
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// To add a photo to a pin, put an image in the images/ folder and set photo:"images/whatever.jpg"
+/* PHOTOS: put pictures in the images/ folder named after the bar's id, for example
+   images/nyes-1.jpg, images/nyes-2.jpg, images/nyes-3.jpg. Up to 4 per bar. They show up automatically. */
 const stops=[
- {n:"Mainstreet Bar & Grill",a:"814 Mainstreet, Hopkins",lat:44.9243129,lng:-93.4108628,t:"2:00 PM",h:"11 AM – 1 AM",note:"Kickoff in Hopkins.",photo:""},
- {n:"Cuzzy's Grill & Bar",a:"507 N Washington Ave",lat:44.9862047,lng:-93.2752031,t:"3:15 PM",h:"8 AM – 2 AM",note:"Order the mystery shot.",photo:""},
- {n:"Nye's Bar",a:"112 E Hennepin Ave",lat:44.9871605,lng:-93.2584696,t:"4:15 PM",h:"4 PM – 2 AM",note:"Opens at 4. Piano bar sing-alongs.",photo:""},
- {n:"NE Moose Bar & Grill",a:"356 Monroe St NE",lat:44.9948258,lng:-93.2529192,t:"5:15 PM",h:"7 AM – 2 AM",note:"Park here and walk the rest. Dinner.",photo:""},
- {n:"Northeast Yacht Club",a:"801 Marshall St NE",lat:44.9954177,lng:-93.2664124,t:"6:10 PM",h:"11 AM – 1 AM",note:"Pool and Golden Tee.",photo:""},
- {n:"The 1029 Bar",a:"1029 Marshall St NE",lat:44.9981135,lng:-93.2683104,t:"7:05 PM",h:"10 AM – 2 AM",note:"Bras on the ceiling.",photo:""},
- {n:"Dusty's Bar",a:"1319 Marshall St NE",lat:45.0007702,lng:-93.2701598,t:"8:00 PM",h:"11 AM – 2 AM",note:"Second round of food. Get the Dago.",photo:""},
- {n:"Knight Cap Bar & Lounge",a:"1500 4th St NE",lat:45.0032356,lng:-93.26176,t:"8:55 PM",h:"10 AM – 2 AM",note:"Fish tank behind the bar.",cash:true,photo:""},
- {n:"Shaw's Bar & Grill",a:"1528 University Ave NE",lat:45.004045,lng:-93.2634427,t:"9:50 PM",h:"11 AM – 1 AM",note:"Blues band likely on.",cash:true,photo:""},
- {n:"Jimmy's Bar & Lounge",a:"1828 4th St NE",lat:45.0073544,lng:-93.2617596,t:"10:45 PM",h:"8 AM – 2 AM",note:"Cheapest, heaviest pours.",cash:true,photo:""},
- {n:"Northeast Palace Bar & Grill",a:"2500 4th St NE",lat:45.013275,lng:-93.2617848,t:"11:40 PM",h:"10 AM – 1 AM",note:"Fire pits. Closes at 1.",photo:""},
- {n:"Grumpy's Bar",a:"2200 4th St NE",lat:45.0101117,lng:-93.2618041,t:"12:35 AM",h:"12 PM – 2 AM",note:"The finale. Bring a clean ID.",photo:""}
+ {id:"mainstreet",short:"Mainstreet",n:"Mainstreet Bar & Grill",a:"814 Mainstreet, Hopkins",lat:44.9243129,lng:-93.4108628,t:"2:00 PM",m:840,h:"11 AM – 1 AM",leg:"drive",
+  tag:"Hometown kickoff on Hopkins' main drag.",
+  hi:["Neighborhood bar and grill with a big menu and a stage for live music.","Happy hour prices are a highlight, and some nights there's a meat raffle."],
+  order:"A cold tap beer and something off the happy hour menu to start the day.",tip:"Ask your server what's on tap; the beer list isn't always printed on the menu.",chips:[]},
+ {id:"cuzzys",short:"Cuzzy's",n:"Cuzzy's Grill & Bar",a:"507 N Washington Ave, Minneapolis",lat:44.9862047,lng:-93.2752031,t:"3:15 PM",m:915,h:"8 AM – 2 AM",leg:"drive",
+  tag:"North Loop institution, 25+ years running.",
+  hi:["Walls and ceiling covered in decades of dollar bills and stickers.","Dog-friendly patio and a regular pre-Twins-game crowd."],
+  order:"The mystery shot, a slushy, or a margarita pitcher for the table. Loaded tots if anyone's hungry.",tip:"It's the anchor stop, so get the group photo here.",chips:["Anchor"]},
+ {id:"nyes",short:"Nye's",n:"Nye's Bar",a:"112 E Hennepin Ave, Minneapolis",lat:44.9871605,lng:-93.2584696,t:"4:15 PM",m:975,h:"4 PM – 2 AM",leg:"drive",
+  tag:"Piano bar sing-alongs on E Hennepin.",
+  hi:["Long, narrow room built around the piano. Piano karaoke draws a crowd.","Specialty drinks are cheap for the area."],
+  order:"Try a house specialty cocktail, then put in a song request.",tip:"Doors open at 4 PM sharp. Be nice to the piano player and you'll get your song.",chips:["Opens 4 PM"]},
+ {id:"moose",short:"Moose",n:"NE Moose Bar & Grill",a:"356 Monroe St NE, Minneapolis",lat:44.9948258,lng:-93.2529192,t:"5:15 PM",m:1035,h:"7 AM – 2 AM",leg:"walk",
+  tag:"Home base for the walking leg.",
+  hi:["Big room with a wraparound bar and very large beer pours.","Free parking lot. Karaoke some nights."],
+  order:"Dinner. Wings or a burger, and a big pour.",tip:"Park the car here. Everything after this is walkable.",chips:["Park here","Food"]},
+ {id:"yacht",short:"Yacht Club",n:"Northeast Yacht Club",a:"801 Marshall St NE, Minneapolis",lat:44.9954177,lng:-93.2664124,t:"6:10 PM",m:1090,h:"11 AM – 1 AM",leg:"walk",
+  tag:"Quiet corner tavern, no yacht required.",
+  hi:["Pool table and Golden Tee.","Regulars say the gin and tonics are strong and the burgers and tots are worth it."],
+  order:"A gin and tonic, or a PBR with tots.",tip:"Ask for Mary's BBQ sauce.",chips:[]},
+ {id:"1029",short:"1029",n:"The 1029 Bar",a:"1029 Marshall St NE, Minneapolis",lat:44.9981135,lng:-93.2683104,t:"7:05 PM",m:1145,h:"10 AM – 2 AM",leg:"walk",
+  tag:"Classic Nordeast corner bar, packed for decades.",
+  hi:["Eclectic decor, including bras hanging from the ceiling.","Good patio and a big food lineup."],
+  order:"Wings or a burger if the Moose didn't fill you up.",tip:"Saturday night it fills up. Grab a corner and hold it.",chips:[]},
+ {id:"dustys",short:"Dusty's",n:"Dusty's Bar",a:"1319 Marshall St NE, Minneapolis",lat:45.0007702,lng:-93.2701598,t:"8:00 PM",m:1200,h:"11 AM – 2 AM",leg:"walk",
+  tag:"Home of the Dago sandwich.",
+  hi:["Tucked-away neighborhood bar that regulars call an upscale dive.","Local beers on tap and cool old bar lights."],
+  order:"The Dago, a spicy sausage sandwich. Try the half-and-half.",tip:"Second food stop. Don't skip it.",chips:["Food"]},
+ {id:"knightcap",short:"Knight Cap",n:"Knight Cap Bar & Lounge",a:"1500 4th St NE, Minneapolis",lat:45.0032356,lng:-93.26176,t:"8:55 PM",m:1255,h:"10 AM – 2 AM",leg:"walk",
+  tag:"The real-deal dive on 4th St.",
+  hi:["Fish tank behind the bar.","Chill back patio."],
+  order:"A shot and a beer. Keep it simple.",tip:"Cash only (ATM inside). Staff can be curt. One round and move on.",chips:["Cash only"]},
+ {id:"shaws",short:"Shaw's",n:"Shaw's Bar & Grill",a:"1528 University Ave NE, Minneapolis",lat:45.004045,lng:-93.2634427,t:"9:50 PM",m:1310,h:"11 AM – 1 AM",leg:"walk",
+  tag:"The blues bar of Nordeast.",
+  hi:["Live local blues most nights. It gets loud when the band plays.","Outdoor smoking area with bags (cornhole)."],
+  order:"The Sun Burger, a holdover from when this was the Sun Saloon.",tip:"Cash only, ATM on site.",chips:["Cash only","Live music"]},
+ {id:"jimmys",short:"Jimmy's",n:"Jimmy's Bar & Lounge",a:"1828 4th St NE, Minneapolis",lat:45.0073544,lng:-93.2617596,t:"10:45 PM",m:1365,h:"8 AM – 2 AM",leg:"walk",
+  tag:"Cheapest drinks in Nordeast.",
+  hi:["Heavy pours. Taste before you complain it's small.","Old-school room and bartenders with a joke for everybody."],
+  order:"A domestic long neck, or the hot ham and cheese.",tip:"Cash only. Don't judge it by the bathroom.",chips:["Cash only"]},
+ {id:"palace",short:"Palace",n:"Northeast Palace Bar & Grill",a:"2500 4th St NE, Minneapolis",lat:45.013275,lng:-93.2617848,t:"11:40 PM",m:1420,h:"10 AM – 1 AM",leg:"walk",
+  tag:"Local dive with a family feel.",
+  hi:["Patio with two fire pits.","Live music and DJs, plus theme food nights like jerk chicken."],
+  order:"Fried green beans if the kitchen's still open.",tip:"Closes at 1 AM. That's why it comes before Grumpy's.",chips:["Closes 1 AM"]},
+ {id:"grumpys",short:"Grumpy's",n:"Grumpy's Bar",a:"2200 4th St NE, Minneapolis",lat:45.0101117,lng:-93.2618041,t:"12:35 AM",m:1475,h:"12 PM – 2 AM",leg:"walk",
+  tag:"The finale. Three blocks back down 4th.",
+  hi:["Rotating lineup of mostly local taps.","Patio and a packed Saturday crowd."],
+  order:"A local tap and a Heggie's pizza.",tip:"The door is strict: bring an ID with no clipped corners.",chips:["Finale"]}
 ];
-const css=getComputedStyle(document.documentElement);
-const blue=css.getPropertyValue("--blue").trim()||"#1F4A6E", walk=css.getPropertyValue("--walk").trim()||"#2E6B4F";
-const gmaps=s=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(s.n+", "+s.a+", Minneapolis, MN");
+// Default crew. Live counts, names and heads come from counts.json in the repo once it exists.
+const defaultPeople=[
+ {id:"bret",name:"Bret",proj:24,head:"images/heads/bret.png",ds:"The favorite. Projected to finish all 24."},
+ {id:"travis",name:"Travis",proj:20,head:"images/heads/travis.png",ds:"Sketchy from beer 12 on. Projected to tap out at 20."},
+ {id:"greg",name:"Greg",proj:18,head:"images/heads/greg.png",ds:"Wobbling by 16. Projected to be asleep by 18."}
+];
+// Milestones: triggered by each guy's own running total, at whatever bar it happens
+const milestones=[
+ {n:12,pid:"travis",t:"Beer 12 for Trav. Halfway, and welcome to the sketchy zone."},
+ {n:16,pid:"greg",t:"Beer 16 for Greg. He's gone quiet and is staring at nothing. This might be it."},
+ {n:18,pid:"greg",t:"Beer 18 for Greg. He's asleep. Somebody prop him up for the photo."},
+ {n:20,pid:"travis",t:"Beer 20 for Trav. He has left the building. Hopefully in an Uber."},
+ {n:24,pid:"bret",t:"Beer 24 for Bret. You absolute legend. Congrats, champ."}
+];
+const legColor=s=>s.extra?"var(--amber)":s.leg==="drive"?"var(--blue)":"var(--walk)";
+const legHex=s=>s.leg==="drive"?"#7FB2DB":"#7CC4A0";
+const q=s=>encodeURIComponent(s.extra?`${s.n}, Minneapolis, MN`:s.n+", "+s.a+", MN");
+const gPlace=s=>"https://www.google.com/maps/search/?api=1&query="+q(s);
+const gDir=s=>"https://www.google.com/maps/dir/?api=1&destination="+q(s)+"&travelmode="+(s.leg==="drive"?"driving":"walking");
 
-const map=L.map("map",{scrollWheelZoom:false});
-L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,
-  attribution:'Tiles &copy; Esri &mdash; Sources: Esri, HERE, Garmin, USGS, OpenStreetMap contributors'}).addTo(map);
+// Planned stops plus any added during the night, each added stop placed after the bar it followed
+function allStops(){
+  const ex=(state&&state.extra)||[];
+  const out=[];
+  const place=id=>ex.filter(e=>e.after===id).forEach(e=>{out.push({...e,extra:true,short:e.n.length>14?e.n.slice(0,13)+"…":e.n});place(e.id);});
+  place("__start");
+  stops.forEach(s=>{out.push(s);place(s.id);});
+  ex.filter(e=>!out.some(o=>o.id===e.id)).forEach(e=>out.push({...e,extra:true,short:e.n}));
+  return out;
+}
+const label=s=>s.extra?`<span class="k">+</span>${s.short}`:`<span class="k">${stops.indexOf(s)+1}</span>${s.short}`;
 
-const pts=stops.map(s=>[s.lat,s.lng]);
-L.polyline(pts.slice(0,4),{color:"#1F4A6E",weight:4,opacity:.8}).addTo(map);
-L.polyline(pts.slice(3),{color:"#2E6B4F",weight:4,opacity:.8,dashArray:"6 8"}).addTo(map);
+const tabs=document.getElementById("tabs"), panels=document.getElementById("panels");
+let views=[], current=location.hash.slice(1)||"route";
 
-const markers=stops.map((s,i)=>{
-  const color=i<3?"#1F4A6E":"#2E6B4F";
-  const icon=L.divIcon({className:"",html:`<div class="pin" style="background:${color}">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
-  const img=s.photo?`<img src="${s.photo}" alt="${s.n}" onerror="this.remove()">`:"";
-  const html=`<div class="pop">${img}<span class="t">${i+1} · ${s.t}</span><b>${s.n}</b>
-    <div class="h">${s.a} · Sat ${s.h}</div><div>${s.note}${s.cash?' <span style="color:#9C2F23;font-weight:600">Cash only.</span>':""}</div>
-    <a href="${gmaps(s)}" target="_blank" rel="noopener">Photos &amp; reviews ›</a></div>`;
-  const m=L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(html,{closeButton:true,autoPan:true});
-  m.on("mouseover",()=>m.openPopup());
-  return m;
+// Route panel (built once)
+const rp=document.createElement("section");rp.id="panel-route";rp.role="tabpanel";
+rp.innerHTML=`<h2>The 24-beer challenge</h2><p class="sub">24 beers. Twelve bars planned, but the night decides. Live count kept by the official scorekeeper.</p>
+  <div class="contest" id="board"></div>
+  <div id="crawlWrap" hidden><h2 style="margin-top:28px">Tonight's crawl</h2><p class="sub">Where we've actually been, in order.</p><div class="table" id="crawl"></div></div>
+  <div id="addWrap"></div>
+  <h2 style="margin-top:28px">The plan</h2><p class="sub">Drive stops 1–4, park at the Moose, then walk 5–12. Tap a pin or a bar to open its tab.</p>
+  <div id="map"></div>
+  <div class="table">${stops.map((s,i)=>`<button class="row" type="button" data-go="${s.id}" id="row-${s.id}">
+    <span class="num" style="background:${legColor(s)}">${i+1}</span><span class="nm">${s.n}</span><span class="tm" id="st-${s.id}"></span>
+    <span class="ad">${s.a.split(",")[0]} · Sat ${s.h}${s.chips.includes("Cash only")?' · <span style="color:var(--warn)">Cash only</span>':""}<span class="tml" id="tm-${s.id}"></span><span class="mini" id="mini-${s.id}"></span></span></button>`).join("")}</div>
+  <h3>House rules</h3>
+  <ul class="rules">
+    <li>Bring cash for Knight Cap, Shaw's and Jimmy's.</li>
+    <li>Nye's opens at 4 PM. Don't show up early.</li>
+    <li>Eat at the Moose and again at Dusty's.</li>
+    <li>Nobody drives after the first stop.</li>
+  </ul>`;
+panels.append(rp);
+const bp=document.createElement("section");bp.id="panel-bets";bp.role="tabpanel";bp.hidden=true;
+bp.innerHTML=`<h2>Place your bets</h2><div id="betsBody"><p class="sub">Loading bets…</p></div>`;
+panels.append(bp);
+
+function barPanelHTML(s,list){
+  const i=list.indexOf(s), prev=list[i-1], next=list[i+1];
+  const head=`<div class="bar-head"><span class="num" style="background:${legColor(s)}">${s.extra?"+":stops.indexOf(s)+1}</span>
+      <div><h2>${s.n}</h2><p class="sub">${s.extra?"Off-plan stop. The night had other ideas.":s.tag}</p></div></div>
+    <div id="msb-${s.id}"></div>
+    <div id="visit-${s.id}"></div>
+    <div class="left" id="left-${s.id}" hidden></div>`;
+  const pager=`<div class="pager">
+      <button class="btn" type="button" data-go="${prev?prev.id:"route"}">‹ ${prev?prev.short:"Route"}</button>
+      <button class="btn" type="button" data-go="${next?next.id:""}" ${next?"":"disabled"}>${next?next.short+" ›":"Last stop"}</button></div>`;
+  if(s.extra)return head+`
+    <div class="actions">
+      <a class="btn primary" href="${gDir(s)}" target="_blank" rel="noopener">Directions</a>
+      <a class="btn" href="${gPlace(s)}" target="_blank" rel="noopener">Photos &amp; reviews</a>
+    </div><div id="rm-${s.id}"></div>`+pager;
+  return head+`
+    <div class="facts">
+      <div class="fact"><div class="l">Sat hours</div><div class="v">${s.h}</div></div>
+      <div class="fact"><div class="l">Planned stop</div><div class="v">${stops.indexOf(s)+1} of 12</div></div>
+    </div>
+    ${s.chips.length?`<div class="chips">${s.chips.map(c=>`<span class="chip ${c==="Cash only"?"cash":c==="Food"?"food":""}">${c}</span>`).join("")}</div>`:""}
+    <div class="gallery" id="gal-${s.id}" hidden></div>
+    <div class="nophoto" id="nop-${s.id}">No photos added yet. <a href="${gPlace(s)}" target="_blank" rel="noopener">See photos on Google Maps ›</a></div>
+    <h3>Why we're here</h3>
+    <ul class="list">${s.hi.map(h=>`<li>${h}</li>`).join("")}<li><b>Order:</b> ${s.order}</li><li><b>Tip:</b> ${s.tip}</li></ul>
+    <h3>Address</h3>
+    <p style="margin:0">${s.a}</p>
+    <div class="actions">
+      <a class="btn primary" href="${gDir(s)}" target="_blank" rel="noopener">Directions</a>
+      <a class="btn" href="${gPlace(s)}" target="_blank" rel="noopener">Photos &amp; reviews</a>
+    </div>`+pager;
+}
+
+let builtKey="";
+function buildTabs(){
+  const list=allStops(), key=list.map(s=>s.id).join("|");
+  if(key===builtKey)return false;
+  builtKey=key;
+  views=[{id:"route",label:"Route"},{id:"bets",label:"Bets"},...list.map(s=>({id:s.id,label:label(s)}))];
+  tabs.innerHTML="";
+  views.forEach(v=>{
+    const b=document.createElement("button");
+    b.className="tab";b.type="button";b.role="tab";b.id="tab-"+v.id;b.innerHTML=v.label;
+    b.setAttribute("aria-controls","panel-"+v.id);b.onclick=()=>show(v.id,true);tabs.append(b);
+  });
+  [...panels.querySelectorAll("section.bar")].forEach(p=>p.remove());
+  list.forEach(s=>{
+    const p=document.createElement("section");p.id="panel-"+s.id;p.role="tabpanel";p.className="bar";p.hidden=true;
+    p.innerHTML=barPanelHTML(s,list);panels.append(p);
+  });
+  loaded.clear();
+  show(views.some(v=>v.id===current)?current:"route",false);
+  return true;
+}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g&&g.dataset.go)show(g.dataset.go,true);});
+
+// Photos for planned bars: images/<id>-1..4.jpg when present
+const loaded=new Set();
+function loadPhotos(id){
+  if(loaded.has(id))return;loaded.add(id);
+  const gal=document.getElementById("gal-"+id),nop=document.getElementById("nop-"+id),s=stops.find(x=>x.id===id);
+  if(!gal||!s)return;
+  [1,2,3,4].forEach(n=>{
+    const img=new Image();img.alt=s.n+" photo "+n;img.loading="lazy";
+    img.onload=()=>{gal.hidden=false;nop.hidden=true;const kids=[...gal.children];const after=kids.find(k=>+k.dataset.n>n);after?gal.insertBefore(img,after):gal.append(img);};
+    img.dataset.n=n;img.src=`images/${id}-${n}.jpg`;
+  });
+}
+
+// Map (planned stops only)
+let map;
+function initMap(){
+  if(map){map.invalidateSize();return;}
+  if(!window.L){document.getElementById("map").innerHTML='<p style="padding:16px;color:var(--muted)">Map needs a connection. The list below still works.</p>';return;}
+  map=L.map("map",{scrollWheelZoom:false});
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,
+    attribution:'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, USGS, OpenStreetMap contributors'}).addTo(map);
+  const pts=stops.map(s=>[s.lat,s.lng]);
+  L.polyline(pts.slice(0,4),{color:"#3B6E96",weight:4,opacity:.9}).addTo(map);
+  L.polyline(pts.slice(3),{color:"#2E6B4F",weight:4,opacity:.9,dashArray:"6 8"}).addTo(map);
+  stops.forEach((s,i)=>{
+    const icon=L.divIcon({className:"",html:`<div class="pin" style="background:${legHex(s)}">${i+1}</div>`,iconSize:[28,28],iconAnchor:[14,14]});
+    const m=L.marker([s.lat,s.lng],{icon}).addTo(map)
+      .bindPopup(`<b>${i+1}. ${s.n}</b><br>Sat ${s.h}<br><a href="#${s.id}" data-go="${s.id}">Open tab ›</a>`);
+    m.on("mouseover",()=>m.openPopup());
+  });
+  map.fitBounds(L.latLngBounds(pts),{padding:[24,24]});
+}
+
+// Tab switching
+function show(id,push){
+  if(!views.some(v=>v.id===id))id="route";
+  current=id;
+  views.forEach(v=>{
+    const on=v.id===id;
+    document.getElementById("tab-"+v.id).setAttribute("aria-selected",on);
+    document.getElementById("panel-"+v.id).hidden=!on;
+  });
+  const t=document.getElementById("tab-"+id);t.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"});
+  if(push&&location.hash!=="#"+id)history.replaceState(null,"","#"+id);
+  if(id==="route")setTimeout(initMap,0);else if(id==="bets")setTimeout(loadBets,0);else loadPhotos(id);
+  if(push)window.scrollTo({top:document.getElementById("tabs").offsetTop-4,behavior:"smooth"});
+}
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)||"route",false));
+
+
+
+/* ===== Live scoring =====
+   Everything lives in counts.json in this GitHub repo. Anyone can read it.
+   Only a phone holding the repo owner's GitHub key can change it or upload photos. */
+const REPO=(()=>{const h=location.hostname;if(h.endsWith(".github.io"))return{owner:h.split(".")[0],repo:location.pathname.split("/")[1]||h,branch:"main"};return{owner:"mill1016",repo:"octoberside",branch:"main"};})();
+const API=`https://api.github.com/repos/${REPO.owner}/${REPO.repo}/contents/`;
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+let token=store.get("oct-token"), state=null, sha=null, online=false, saveTimer=null, saving=false, dirty=false;
+const localPhotos={}; // instant previews on the scorekeeper's phone
+
+const people=()=> (state&&state.people&&state.people.length)?state.people.map(p=>({...defaultPeople.find(d=>d.id===p.id),...p})):defaultPeople;
+const atBar=(bar,pid)=>state&&state.bars&&state.bars[bar]&&state.bars[bar][pid]||0;
+const visitOf=bar=>state&&state.visits&&state.visits[bar]||{};
+// The night as it actually happened: bars you arrived at, by arrival time; then any bar with beers but no arrival, in tab order
+function actual(){
+  const list=allStops(), arrived=list.filter(s=>visitOf(s.id).arrive).sort((a,b)=>visitOf(a.id).arrive<visitOf(b.id).arrive?-1:1);
+  const rest=list.filter(s=>!visitOf(s.id).arrive&&people().some(p=>atBar(s.id,p.id)>0));
+  return [...arrived,...rest];
+}
+const total=pid=>allStops().reduce((n,s)=>n+atBar(s.id,pid),0);
+function through(bar,pid){let n=0;for(const s of actual()){n+=atBar(s.id,pid);if(s.id===bar)return n;}return n;}
+// Planned bar counts as skipped once we've arrived somewhere later in the night
+function skipped(s){
+  if(s.extra||visitOf(s.id).arrive||people().some(p=>atBar(s.id,p.id)>0))return false;
+  const list=allStops(), i=list.indexOf(s);return list.slice(i+1).some(x=>visitOf(x.id).arrive);
+}
+// Where each milestone happened, if it has
+function msHits(){
+  const out=[];
+  milestones.forEach(m=>{let n=0;for(const s of actual()){n+=atBar(s.id,m.pid);if(n>=m.n){out.push({...m,bar:s});break;}}});
+  return out;
+}
+const visit=bar=>state&&state.visits&&state.visits[bar]||{};
+const photoPath=(bar,pid)=>state&&state.photos&&state.photos[bar]&&state.photos[bar][pid];
+const photoURL=p=>!p?null:/^(https?:|data:)/.test(p)?p:`https://raw.githubusercontent.com/${REPO.owner}/${REPO.repo}/${REPO.branch}/${p}`;
+const barPhoto=(bar,pid)=>localPhotos[bar+"/"+pid]||photoURL(photoPath(bar,pid));
+const latestPhoto=pid=>{const a=actual();for(const s of [...a.reverse(),...allStops().reverse()]){const u=barPhoto(s.id,pid);if(u)return u;}return null;};
+const b64e=t=>btoa(unescape(encodeURIComponent(t))), b64d=t=>decodeURIComponent(escape(atob(t.replace(/\n/g,""))));
+const hdr=()=>Object.assign({Accept:"application/vnd.github+json"},token?{Authorization:"Bearer "+token}:{});
+const clock=iso=>iso?new Date(iso).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
+function ago(iso){if(!iso)return "";const m=Math.round((Date.now()-new Date(iso))/60000);return m<1?"just now":m<60?`${m} min ago`:`${Math.floor(m/60)} hr ${m%60} min ago`;}
+function currentBar(){
+  if(!state)return stops[0];
+  const arrived=actual().filter(s=>visit(s.id).arrive);
+  return arrived.filter(s=>!visit(s.id).depart).pop()||arrived.pop()||stops[0];
+}
+
+const headOK={}, headTried={};
+function preloadHeads(){people().forEach(p=>{if(!p.head||headTried[p.head])return;headTried[p.head]=1;const im=new Image();im.onload=()=>{headOK[p.head]=1;renderAll();};im.src=p.head;});}
+function faceHTML(p,url,cls="head"){
+  if(url)return `<img class="${cls}" src="${url}" alt="${p.name}">`;
+  return headOK[p.head]?`<img class="${cls}" src="${p.head}" alt="${p.name}">`:`<span class="${cls}" aria-label="${p.name}">${p.name.slice(0,1)}</span>`;
+}
+const mugs=n=>Array.from({length:n},()=>'<img src="images/beer.png" alt="">').join("");
+
+function renderBoard(){
+  const admin=!!token, ps=people(), cur=currentBar(), v=visit(cur.id);
+  const where=online&&v.arrive?(v.depart?`Last stop: ${cur.short}, left ${clock(v.depart)}`:`At ${cur.short} since ${clock(v.arrive)}`):"";
+  document.getElementById("board").innerHTML=`<div class="hd"><b>The contenders</b><span class="live ${online?"":"off"}">${online?(lagging?"● Live · may lag a few min":"● Live count"):"Live count starts Saturday"} <button class="refresh" id="refresh" type="button" aria-label="Refresh">↻</button></span></div>
+  ${where?`<div class="where">${where}</div>`:""}
+  ${(()=>{const h=msHits();const last=h[h.length-1];return last?`<div class="banner"><div class="bn">Latest milestone · ${last.bar.short}</div><p>${last.t}</p></div>`:"";})()}
+  ${ps.map(p=>{const c=total(p.id),last=state&&state.last&&state.last[p.id];
+    return `<div class="guy">${faceHTML(p,latestPhoto(p.id),"face")}
+      <div class="who"><span class="nm">${p.name}</span><span class="sm">${last?"Last beer "+ago(last):"Projected "+p.proj}</span></div>
+      <span class="cnt">${c}<small>/24</small></span>
+      <div class="grid24" aria-label="${c} of 24 beers">${Array.from({length:24},(_,k)=>k<c?'<img src="images/beer.png" alt="">':'<img class="e" src="images/beer.png" alt="">').join("")}</div>
+      ${admin?`<div class="ctl"><button class="btn" type="button" data-adj="${p.id}" data-bar="${cur.id}" data-d="-1">− 1</button><button class="btn plus" type="button" data-adj="${p.id}" data-bar="${cur.id}" data-d="1">+ 1 at ${cur.short}</button></div>`:`<span class="ds">${p.ds||""}</span>`}
+    </div>`;}).join("")}`;
+  renderAdminBar();
+}
+
+function renderBars(){
+  const admin=!!token, ps=people();
+  const hits=msHits();
+  allStops().forEach(s=>{
+    const v=visit(s.id), vb=document.getElementById("visit-"+s.id), box=document.getElementById("left-"+s.id), mini=document.getElementById("mini-"+s.id), tm=document.getElementById("tm-"+s.id);
+    if(!vb)return;
+    const mine=hits.filter(h=>h.bar.id===s.id);
+    document.getElementById("msb-"+s.id).innerHTML=mine.map(h=>`<div class="banner"><div class="bn">Milestone</div><p>${h.t}</p></div>`).join("");
+    const sk=skipped(s), st=document.getElementById("st-"+s.id), row=document.getElementById("row-"+s.id), tb=document.getElementById("tab-"+s.id);
+    if(st)st.textContent=sk?"Skipped":v.arrive?"✓":""; if(row)row.classList.toggle("skip",sk); if(tb)tb.classList.toggle("skip",sk);
+    const rm=document.getElementById("rm-"+s.id);
+    if(rm)rm.innerHTML=admin?`<div class="actions" style="grid-template-columns:1fr"><button class="btn" type="button" data-remove="${s.id}">Remove this stop</button></div>`:"";
+    const any=ps.some(p=>atBar(s.id,p.id)>0)||v.arrive||(state&&state.photos&&state.photos[s.id]);
+    // arrive / depart
+    const times=[v.arrive?`Arrived ${clock(v.arrive)}`:"",v.depart?`Left ${clock(v.depart)}`:""].filter(Boolean).join(" · ");
+    vb.innerHTML=admin?`<div class="visit"><div class="vt">${times||"Not here yet"}</div><div class="actions">
+        <button class="btn ${v.arrive?"":"primary"}" type="button" data-visit="${s.id}" data-k="arrive">${v.arrive?"Reset arrival":"We're here"}</button>
+        <button class="btn ${v.arrive&&!v.depart?"primary":""}" type="button" data-visit="${s.id}" data-k="depart" ${v.arrive?"":"disabled"}>${v.depart?"Reset departure":"We're leaving"}</button></div></div>`
+      :(times?`<div class="visit"><div class="vt">${times}</div></div>`:"");
+    if(tm)tm.textContent=times;
+    // per-person card
+    if(any||admin){
+      box.hidden=false;
+      box.innerHTML=`<div class="ttl">${v.depart?"When we left "+s.short:"Beers at "+s.short}${admin?" · tap a face for a photo":""}</div><div class="heads">${ps.map(p=>{
+        const here=atBar(s.id,p.id), tot=through(s.id,p.id), L=Math.ceil(here/2), R=Math.floor(here/2);
+        return `<div class="h"><span class="mugs l">${mugs(L)}</span>
+          ${admin?`<button class="snap" type="button" data-snap="${s.id}" data-pid="${p.id}" aria-label="Photo of ${p.name}">${faceHTML(p,barPhoto(s.id,p.id))}</button>`:faceHTML(p,barPhoto(s.id,p.id))}
+          <span class="mugs r">${mugs(R)}</span>
+          <span class="nm2" ${admin?`data-snap="${s.id}" data-pid="${p.id}" role="button"`:""}>${p.name}<small>${here} here</small></span><b>${tot}</b>
+          ${admin?`<div class="ctl sm"><button class="btn" type="button" data-adj="${p.id}" data-bar="${s.id}" data-d="-1">− 1</button><button class="btn plus" type="button" data-adj="${p.id}" data-bar="${s.id}" data-d="1">+ 1</button></div>`:""}
+        </div>`;}).join("")}</div>`;
+    }else box.hidden=true;
+    // route list: heads with running totals once we've been there
+    if(mini)mini.innerHTML=any?ps.map(p=>`<span class="h">${faceHTML(p,barPhoto(s.id,p.id))}${through(s.id,p.id)}</span>`).join(""):"";
+  });
+  renderCrawl();
+}
+function renderCrawl(){
+  const ps=people(), a=actual(), hits=msHits();
+  document.getElementById("crawlWrap").hidden=!a.length;
+  document.getElementById("crawl").innerHTML=a.map((s,k)=>{const v=visit(s.id);
+    const times=[v.arrive?clock(v.arrive):"",v.depart?clock(v.depart):""].filter(Boolean).join(" – ");
+    return `<button class="row" type="button" data-go="${s.id}"><span class="num" style="background:${legColor(s)}">${k+1}</span><span class="nm">${s.n}</span><span class="tm">${times}</span>
+      <span class="ad">${s.extra?"Off-plan stop":"Planned stop "+(stops.indexOf(s)+1)}${hits.filter(h=>h.bar.id===s.id).map(h=>`<span class="ms">${h.t}</span>`).join("")}
+      <span class="mini">${ps.map(p=>`<span class="h">${faceHTML(p,barPhoto(s.id,p.id))}${through(s.id,p.id)}</span>`).join("")}</span></span></button>`;}).join("");
+  document.getElementById("addWrap").innerHTML=token?`<div class="actions" style="grid-template-columns:1fr;margin-top:14px"><button class="btn primary" type="button" id="addStop">+ Add a stop that's not on the plan</button></div>`:"";
+}
+function renderAll(){buildTabs();preloadHeads();renderBoard();renderBars();if(current==="bets"&&typeof renderBets==="function"&&betRows)renderBets();}
+
+// Reads: ask "anything new?" with an ETag. Unchanged answers (304) don't count against GitHub's limit.
+// If a phone still gets rate-limited, read the raw file instead until the limit resets (may lag a few minutes).
+let etag=null, rawUntil=0, lastLoad=0, lagging=false;
+const RAW=`https://raw.githubusercontent.com/${REPO.owner}/${REPO.repo}/${REPO.branch}/counts.json`;
+function apply(json){ if(dirty||saving)return; state=json; normalize(); online=true; renderAll(); }
+async function load(force){
+  if(!force&&Date.now()-lastLoad<25000)return;
+  lastLoad=Date.now();
+  try{
+    if(!token&&Date.now()<rawUntil){
+      const r=await fetch(RAW+"?t="+Math.floor(Date.now()/60000),{cache:"no-store"});
+      if(r.ok){lagging=true;apply(await r.json());}
+      return;
+    }
+    const h=hdr(); if(etag&&state)h["If-None-Match"]=etag;
+    const r=await fetch(API+"counts.json",{headers:h,cache:"no-store"});
+    if(r.status===304){lagging=false;return;}
+    if(r.status===404){online=false;state=null;sha=null;return renderAll();}
+    if(r.status===403||r.status===429){
+      const reset=+r.headers.get("x-ratelimit-reset")||0;
+      rawUntil=reset?reset*1000:Date.now()+3600000; lastLoad=0; return load(true);
+    }
+    if(!r.ok)throw new Error(r.status);
+    etag=r.headers.get("etag"); const j=await r.json(); lagging=false;
+    if(!dirty&&!saving)sha=j.sha;
+    apply(JSON.parse(b64d(j.content)));
+  }catch(e){ if(!state){online=false;renderAll();} }
+}
+function normalize(){
+  state.people=state.people||defaultPeople.map(({id,name,proj,head})=>({id,name,proj,head}));
+  ["bars","visits","photos","last"].forEach(k=>state[k]=state[k]||{});
+  state.extra=state.extra||[];
+}
+function ensureState(){if(!state)state={};normalize();online=true;}
+let pendingN=+(store.get("oct-pending-n")||0);
+function queueSave(){
+  dirty=true;pendingN++;store.set("oct-pending",JSON.stringify(state));store.set("oct-pending-n",pendingN);
+  setStatus(navigator.onLine===false?`No signal · ${pendingN} change${pendingN>1?"s":""} waiting`:"Saving…");
+  clearTimeout(saveTimer);saveTimer=setTimeout(save,1200);
+}
+async function save(retry=true){
+  if(saving){saveTimer=setTimeout(save,800);return;}
+  saving=true;dirty=false;
+  try{
+    if(!sha){const g=await fetch(API+"counts.json",{headers:hdr(),cache:"no-store"});if(g.ok)sha=(await g.json()).sha;}
+    const body={message:"Score update",content:b64e(JSON.stringify(state,null,2))};if(sha)body.sha=sha;
+    const r=await fetch(API+"counts.json",{method:"PUT",headers:{...hdr(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(r.status===409||r.status===422){const g=await fetch(API+"counts.json",{headers:hdr(),cache:"no-store"});if(g.ok)sha=(await g.json()).sha;saving=false;if(retry)return save(false);throw new Error("conflict");}
+    if(r.status===401||r.status===403)throw new Error("key");
+    if(!r.ok)throw new Error(r.status);
+    sha=(await r.json()).content.sha; etag=null;
+    if(!dirty){pendingN=0;store.set("oct-pending",null);store.set("oct-pending-n",null);}
+    setStatus("Saved ✓");
+  }catch(e){dirty=true;setStatus(e.message==="key"?"GitHub rejected the key. Sign out and back in.":`No signal · ${pendingN} change${pendingN>1?"s":""} waiting`);if(e.message!=="key")saveTimer=setTimeout(save,5000);}
+  saving=false;
+}
+let statusText="";
+function setStatus(t){statusText=t;const el=document.getElementById("adminStatus");if(el)el.textContent=t;}
+function renderAdminBar(){
+  let bar=document.getElementById("adminbar");
+  if(!token){bar&&bar.remove();return;}
+  if(!bar){bar=document.createElement("div");bar.id="adminbar";bar.className="adminbar";document.querySelector(".page").append(bar);}
+  bar.innerHTML=`<div><b>Scorekeeper</b> <span id="adminStatus">${statusText||"Ready"}</span></div><button class="btn" type="button" id="signout" style="padding:8px 12px">Sign out</button>`;
+  document.getElementById("signout").onclick=()=>{token=null;store.set("oct-token",null);setStatus("");renderAll();};
+}
+
+// Photos: resize on the phone, then commit to images/crawl/ in the repo
+const cam=document.createElement("input");cam.type="file";cam.accept="image/*";cam.setAttribute("capture","environment");cam.hidden=true;document.body.append(cam);
+let camTarget=null;
+cam.addEventListener("change",async()=>{
+  const f=cam.files&&cam.files[0];cam.value="";if(!f||!camTarget)return;
+  const {bar,pid}=camTarget, p=people().find(x=>x.id===pid), s=allStops().find(x=>x.id===bar);
+  try{
+    setStatus(`Uploading ${p.name}'s photo…`);
+    const url=URL.createObjectURL(f), img=await new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=url;});
+    const max=900, k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    const data=c.toDataURL("image/jpeg",0.8);
+    localPhotos[bar+"/"+pid]=data;renderAll();
+    const path=`images/crawl/${bar}-${pid}-${Date.now()}.jpg`;
+    const r=await fetch(API+path,{method:"PUT",headers:{...hdr(),"Content-Type":"application/json"},body:JSON.stringify({message:`Photo: ${p.name} at ${s.short}`,content:data.split(",")[1]})});
+    if(!r.ok)throw new Error(r.status);
+    ensureState();(state.photos[bar]=state.photos[bar]||{})[pid]=path;queueSave();
+  }catch(e){setStatus("Photo didn't upload. Try again.");delete localPhotos[bar+"/"+pid];renderAll();}
 });
-map.fitBounds(L.latLngBounds(pts),{padding:[30,30]});
 
-const list=document.getElementById("list");
-stops.forEach((s,i)=>{
-  const li=document.createElement("li");
-  li.innerHTML=`<span class="n" style="background:${i<3?blue:walk}">${i+1}</span><strong>${s.n}</strong><span class="t">${s.t}</span>
-    <span class="d">${s.a} · Sat ${s.h}${s.cash?' · <span class="cash">Cash only</span>':""}</span>`;
-  li.onclick=()=>{map.setView([s.lat,s.lng],16);markers[i].openPopup();document.getElementById("map").scrollIntoView({behavior:"smooth"});};
-  list.append(li);
+document.addEventListener("click",e=>{
+  if(!token)return;
+  const a=e.target.closest("[data-adj]"), vs=e.target.closest("[data-visit]"), sn=e.target.closest("[data-snap]");
+  if(e.target.closest("#addStop")){openAddStop();return;}
+  const rmb=e.target.closest("[data-remove]");
+  if(rmb){
+    if(!rmb.dataset.sure){rmb.dataset.sure=1;rmb.textContent="Tap again to remove";rmb.classList.add("primary");return;}
+    ensureState();const id=rmb.dataset.remove;
+    state.extra.forEach(x=>{if(x.after===id)x.after=(state.extra.find(y=>y.id===id)||{}).after||"__start";});
+    state.extra=state.extra.filter(x=>x.id!==id);delete state.bars[id];delete state.visits[id];delete state.photos[id];
+    current="route";renderAll();show("route",true);queueSave();return;
+  }
+  if(sn){camTarget={bar:sn.dataset.snap,pid:sn.dataset.pid};cam.click();return;}
+  if(!(a||vs))return;
+  ensureState();
+  if(a){const b=a.dataset.bar,id=a.dataset.adj,d=+a.dataset.d;const row=state.bars[b]=state.bars[b]||{};
+    row[id]=Math.max(0,(row[id]||0)+d);if(total(id)>24)row[id]--; if(d>0)state.last[id]=new Date().toISOString(); if(navigator.vibrate)navigator.vibrate(15);}
+  if(vs){const b=vs.dataset.visit,k=vs.dataset.k,v=state.visits[b]=state.visits[b]||{},now=new Date().toISOString();
+    if(v[k]){delete v[k];if(k==="arrive")delete v.depart;}
+    else{v[k]=now;if(k==="arrive")Object.entries(state.visits).forEach(([id,o])=>{if(id!==b&&o.arrive&&!o.depart)o.depart=now;});}}
+  renderAll();queueSave();
 });
+
+// Add a stop that isn't on the plan
+function openAddStop(){
+  const sh=document.createElement("div");sh.className="sheet";
+  sh.innerHTML=`<div class="card"><h2 style="font-size:24px">Add a stop</h2>
+    <p class="sub">The night had other ideas. It goes in after ${currentBar().short}.</p>
+    <input id="stopName" type="text" autocomplete="off" placeholder="Bar name, like Stanley's">
+    <label style="display:flex;gap:8px;align-items:center;margin:4px 0 12px"><input id="stopHere" type="checkbox" checked style="width:auto;margin:0"> We're here now</label>
+    <div class="err" id="stopErr"></div>
+    <div class="row2"><button class="btn" type="button" id="stopCancel">Cancel</button><button class="btn primary" type="button" id="stopOk">Add stop</button></div></div>`;
+  document.body.append(sh);
+  sh.querySelector("#stopName").focus();
+  sh.querySelector("#stopCancel").onclick=()=>sh.remove();
+  sh.querySelector("#stopOk").onclick=()=>{
+    const n=sh.querySelector("#stopName").value.trim();
+    if(!n){sh.querySelector("#stopErr").textContent="Type the bar's name.";return;}
+    ensureState();
+    const cur=state.visits&&Object.keys(state.visits).length?currentBar():null;
+    const id="x"+Date.now().toString(36), now=new Date().toISOString();
+    state.extra.push({id,n,after:cur?cur.id:"__start"});
+    if(sh.querySelector("#stopHere").checked){
+      Object.values(state.visits).forEach(o=>{if(o.arrive&&!o.depart)o.depart=now;});
+      state.visits[id]={arrive:now};
+    }
+    sh.remove();renderAll();show(id,true);queueSave();
+  };
+}
+
+// Ride home
+document.getElementById("ride").onclick=()=>{
+  const sh=document.createElement("div");sh.className="sheet";
+  sh.innerHTML=`<div class="card"><h2 style="font-size:26px">Get a ride home.</h2>
+    <p class="sub" style="margin-bottom:14px">You failed. It happens to the best of us. Your beers stay on the board forever.</p>
+    <div class="row2">
+      <a class="btn primary" href="https://m.uber.com/ul/?action=setPickup&pickup=my_location" target="_blank" rel="noopener">Uber</a>
+      <a class="btn primary" href="https://ride.lyft.com/" target="_blank" rel="noopener">Lyft</a>
+    </div>
+    <button class="btn" type="button" style="width:100%;margin-top:8px" id="rideNo">Nah, I'm good (I'm not)</button></div>`;
+  document.body.append(sh);
+  sh.addEventListener("click",e=>{if(e.target===sh||e.target.id==="rideNo")sh.remove();});
+};
+
+// Scorekeeper sign-in: tap the Octoberside title 5 times
+let taps=0,tapT;
+document.querySelector("h1").addEventListener("click",()=>{taps++;clearTimeout(tapT);tapT=setTimeout(()=>taps=0,1500);if(taps>=5){taps=0;openSignin();}});
+function openSignin(){
+  if(token){setStatus("Already signed in");return;}
+  const sh=document.createElement("div");sh.className="sheet";
+  sh.innerHTML=`<div class="card"><h2 style="font-size:24px">Scorekeeper sign-in</h2>
+    <p class="sub">Paste your GitHub key for the ${REPO.repo} repo. It stays on this phone only.</p>
+    <input id="tok" type="password" autocomplete="off" placeholder="github_pat_…">
+    <div class="err" id="tokErr"></div>
+    <div class="row2"><button class="btn" type="button" id="tokCancel">Cancel</button><button class="btn primary" type="button" id="tokOk">Sign in</button></div></div>`;
+  document.body.append(sh);
+  sh.querySelector("#tokCancel").onclick=()=>sh.remove();
+  sh.querySelector("#tokOk").onclick=async()=>{
+    const t=sh.querySelector("#tok").value.trim(),err=sh.querySelector("#tokErr");
+    if(!t){err.textContent="Paste the key first.";return;}
+    err.textContent="Checking…";
+    try{
+      const r=await fetch(`https://api.github.com/repos/${REPO.owner}/${REPO.repo}`,{headers:{Accept:"application/vnd.github+json",Authorization:"Bearer "+t}});
+      const j=r.ok?await r.json():null;
+      if(!j||!(j.permissions&&j.permissions.push))throw 0;
+      token=t;store.set("oct-token",t);sh.remove();setStatus("Signed in");await load();renderAll();
+    }catch(e){err.textContent="That key can't edit this repo. Check that it has Contents: Read and write.";}
+  };
+}
+
+const pend=token&&store.get("oct-pending");
+if(pend){try{state=JSON.parse(pend);normalize();online=true;dirty=true;setStatus(`${pendingN} change${pendingN>1?"s":""} waiting`);saveTimer=setTimeout(save,500);}catch(e){store.set("oct-pending",null);}}
+renderAll();if(!pend)load(true);
+setInterval(()=>{if(!document.hidden)load();},token?20000:90000);
+document.addEventListener("visibilitychange",()=>{if(document.hidden){if(dirty&&token){clearTimeout(saveTimer);save();}}else load();});
+window.addEventListener("online",()=>{if(dirty&&token){clearTimeout(saveTimer);save();}else load(true);});
+document.addEventListener("click",e=>{if(e.target.closest("#refresh")){load(true);}});
+setInterval(()=>{if(online)renderBoard();},60000);
+
+/* ===== Bets =====
+   Bets go into a Google Form, which saves them to a Google Sheet. This page reads the sheet and does the math.
+   Fill in BETS below with your form and sheet links (see README). Until then the tab shows example bets. */
+const BETS={
+  formAction:"",   // https://docs.google.com/forms/d/e/<FORM_ID>/formResponse
+  entries:{name:"",bret:"",travis:"",greg:"",target:"",at:"",comment:""}, // entry.123456 ids from a pre-filled link
+  sheetId:"",      // the long id in your Google Sheet's link
+  closes:"2026-10-24T14:00:00-05:00"
+};
+const betsReady=()=>!!(BETS.formAction&&BETS.sheetId&&BETS.entries.name);
+var betRows=null, betsLoadedAt=0, betsDemo=false;
+const closesAt=new Date(BETS.closes);
+const betsOpen=()=>Date.now()<closesAt;
+
+function demoBets(){
+  const names=["Jen","Amy","Kristin","Dave","Sarah","Mike","Laura","Nicole","Pete","Becky","Tom","Heather"];
+  const pick=(m,s)=>Math.max(0,Math.min(24,Math.round(m+s*((Math.random()+Math.random()+Math.random())*2-3)/1.7)));
+  const heck=[["greg",16,"Greg, the couch misses you."],["travis",12,"Trav, drink a water. Love, me."],["bret",24,"Bret, you are buying breakfast."],["greg",10,"Double digits! Proud of you, honey."],["travis",20,"Uber is on its way. I already ordered it."]];
+  return names.map((n,i)=>({name:n,ts:new Date(closesAt-3600000*(i+1)),bret:pick(21,2.5),travis:pick(16,3),greg:pick(13,3),
+    target:heck[i]?heck[i][0]:"",at:heck[i]?heck[i][1]:null,comment:heck[i]?heck[i][2]:""}));
+}
+function parseGviz(txt){
+  const j=JSON.parse(txt.slice(txt.indexOf("{"),txt.lastIndexOf("}")+1));
+  const cols=j.table.cols.map(c=>(c.label||"").toLowerCase());
+  const find=(...keys)=>cols.findIndex(c=>keys.some(k=>c.includes(k)));
+  const ix={ts:find("timestamp"),name:find("your name","name"),bret:find("bret"),travis:find("travis","trav"),greg:find("greg"),target:find("heckle","who"),at:find("beer #","at beer","which beer"),comment:find("comment","message","say")};
+  const val=(r,i)=>i<0||!r.c[i]?null:r.c[i].v;
+  const date=v=>{const m=/Date\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(v||"");if(!m)return null;const p=n=>String(n).padStart(2,"0");
+    return new Date(`${m[1]}-${p(+m[2]+1)}-${p(m[3])}T${p(m[4])}:${p(m[5])}:${p(m[6])}-05:00`);};
+  const num=v=>v==null||v===""?null:Math.max(0,Math.min(24,Math.round(+v)));
+  return j.table.rows.map(r=>({ts:date(val(r,ix.ts)),name:String(val(r,ix.name)||"").trim(),bret:num(val(r,ix.bret)),travis:num(val(r,ix.travis)),greg:num(val(r,ix.greg)),
+    target:String(val(r,ix.target)||"").toLowerCase().replace(/^trav$/,"travis"),at:num(val(r,ix.at)),comment:String(val(r,ix.comment)||"").trim()})).filter(r=>r.name);
+}
+async function loadBets(force){
+  if(!force&&Date.now()-betsLoadedAt<60000&&betRows)return renderBets();
+  betsLoadedAt=Date.now();
+  if(!betsReady()){betsDemo=true;betRows=betRows&&betsDemo?betRows:demoBets();return renderBets();}
+  try{
+    const r=await fetch(`https://docs.google.com/spreadsheets/d/${BETS.sheetId}/gviz/tq?tqx=out:json&t=${Date.now()}`,{cache:"no-store"});
+    betRows=parseGviz(await r.text());betsDemo=false;
+  }catch(e){if(!betRows)betRows=[];}
+  renderBets();
+}
+// One bet per person: their latest before betting closed
+function validBets(){
+  const by={};
+  (betRows||[]).filter(r=>!r.ts||r.ts<=closesAt).forEach(r=>{const k=r.name.toLowerCase();if(!by[k]||(r.ts&&by[k].ts&&r.ts>by[k].ts))by[k]=r;});
+  return Object.values(by);
+}
+function statsFor(pid){
+  const v=validBets().map(b=>b[pid]).filter(x=>x!=null);
+  if(!v.length)return null;
+  const n=v.length, mean=v.reduce((a,b)=>a+b,0)/n, sd=n>1?Math.sqrt(v.reduce((a,b)=>a+(b-mean)**2,0)/(n-1)):0;
+  return {n,mean,sd,vals:v};
+}
+const pct=x=>Math.max(0,Math.min(100,x/24*100));
+function trackHTML(p,st,live){
+  const m=pct(st.mean), r=pct(st.mean+Math.max(st.sd,0.5));
+  const bg=`linear-gradient(90deg,var(--g) 0%,var(--g) ${m}%,var(--r) ${r}%,var(--r) 100%)`;
+  const stack={};
+  const dots=st.vals.map(v=>{const k=stack[v]=(stack[v]||0)+1;return `<i class="dot" style="left:${pct(v)}%;bottom:${(k-1)*9}px"></i>`;}).join("");
+  const h=Math.max(...Object.values(stack))*9+4;
+  return `<div class="track">
+    <div class="dots" style="height:${h}px">${dots}</div>
+    <div class="barwrap"><div class="bar" style="background:${bg}"></div><div class="mean" style="left:${m}%"></div>
+      ${live!=null&&online?`<img class="livept" style="left:${pct(live)}%" src="images/beer.png" alt="${p.name} is at ${live}">`:""}</div>
+    <div class="ticks">${[0,6,12,18,24].map(t=>`<span style="left:${pct(t)}%">${t}</span>`).join("")}</div>
+    <div class="meanrow"><span style="left:${Math.min(86,Math.max(14,m))}%">Crowd ${st.mean.toFixed(1)}</span></div></div>`;
+}
+function verdict(p,st,live){
+  const hi=Math.round(st.mean+st.sd), lo=Math.max(0,Math.round(st.mean-st.sd));
+  const beyond=st.vals.filter(v=>v>hi).length;
+  let txt=`Most bets land between ${lo} and ${hi}${beyond?`; only ${beyond} of ${st.n} think he gets past ${hi}`:`; nobody thinks he gets past ${hi}`}.`;
+  if(live!=null&&online&&live>0){
+    txt+=` <b class="now">He's at ${live}.</b> `+(live>st.mean+st.sd?"Deep in the red. Nobody saw this coming.":live>st.mean?"Past the crowd's average and into the fade.":`${(st.mean-live).toFixed(1)} to go to the crowd's average.`);
+  }
+  return txt;
+}
+function renderBets(){
+  const el=document.getElementById("betsBody"); if(!el)return;
+  const ps=people(), open=betsOpen(), bets=validBets();
+  const mins=Math.max(0,Math.round((closesAt-Date.now())/60000));
+  const left=mins>=60?`${Math.floor(mins/60)} hr ${mins%60} min`:`${mins} min`;
+  const heckles=bets.filter(b=>b.comment&&b.target);
+  el.innerHTML=`
+    <p class="sub">${open?`Betting closes at 2:00 PM Saturday, in ${left}. One bet per name; your latest counts.`:`Betting closed at 2:00 PM. ${bets.length} bet${bets.length===1?"":"s"} in.`}</p>
+    ${betsDemo?`<div class="banner"><div class="bn">Example bets</div><p>These are made up so you can see how it works. Real bets show here once the betting form is connected.</p></div>`:""}
+    <div class="key"><span><i style="background:var(--g)"></i>Up to the crowd's average</span><span><i style="background:linear-gradient(90deg,var(--g),var(--r))"></i>Fading over 1 std dev</span><span><i style="background:var(--r)"></i>Nobody believes in you</span></div>
+    ${ps.map(p=>{const st=statsFor(p.id);return `<div class="betcard">
+      <div class="bh">${faceHTML(p,latestPhoto(p.id))}<div><b>${p.name}</b><span>${st?`${st.n} bet${st.n===1?"":"s"} · ±${st.sd.toFixed(1)}`:"No bets yet"}</span></div></div>
+      ${st?trackHTML(p,st,state?total(p.id):null)+`<p class="vd">${verdict(p,st,state?total(p.id):null)}</p>`:""}</div>`;}).join("")}
+    ${open&&!betsDemo?formHTML(ps):open&&betsDemo?`<p class="sub" style="margin-top:16px">The betting form appears here once it's connected.</p>`:""}
+    <h3>Heckles</h3>
+    ${heckles.length?`<ul class="list">${heckles.sort((a,b)=>(a.at||0)-(b.at||0)).map(h=>{const p=ps.find(x=>x.id===h.target);if(!p)return "";
+      const unlocked=h.at==null||(state&&total(p.id)>=h.at);
+      return `<li class="${unlocked?"":"locked"}"><b>${p.name}${h.at!=null?` at beer ${h.at}`:""}:</b> ${unlocked?`“${h.comment}” <span class="by">— ${h.name}</span>`:`Locked until ${p.name} hits ${h.at}. From ${h.name}.`}</li>`;}).join("")}</ul>`:`<p class="sub">No heckles yet.</p>`}
+    ${!open&&bets.length&&online?leaderHTML(ps,bets):""}`;
+}
+function leaderHTML(ps,bets){
+  const sc=bets.map(b=>({name:b.name,err:ps.reduce((n,p)=>n+(b[p.id]==null?24:Math.abs(b[p.id]-total(p.id))),0)})).sort((a,b)=>a.err-b.err).slice(0,5);
+  return `<h3>Closest bettors (if the night ended now)</h3><ul class="list">${sc.map((s,i)=>`<li><b>${i+1}. ${s.name}</b> · off by ${s.err} beer${s.err===1?"":"s"} total</li>`).join("")}</ul>`;
+}
+function formHTML(ps){
+  const opts=Array.from({length:25},(_,k)=>`<option value="${k}">${k}</option>`).join("");
+  return `<h3>Place your bet</h3><form class="betform" id="betform">
+    <label>Your name<input id="bName" required maxlength="40" autocomplete="given-name"></label>
+    <div class="bgrid">${ps.map(p=>`<label>${p.name}<select id="b-${p.id}" required><option value="">–</option>${opts}</select></label>`).join("")}</div>
+    <h3 style="margin-top:14px">Leave a heckle (optional)</h3>
+    <div class="bgrid"><label>For<select id="hWho"><option value="">–</option>${ps.map(p=>`<option value="${p.name}">${p.name}</option>`).join("")}</select></label>
+      <label>Unlocks at beer<select id="hAt"><option value="">–</option>${opts}</select></label></div>
+    <label>Heckle<input id="hText" maxlength="140" placeholder="Greg, the couch misses you."></label>
+    <div class="err" id="betErr"></div>
+    <button class="btn primary" type="submit" style="width:100%">Lock in my bet</button></form>`;
+}
+document.addEventListener("submit",async e=>{
+  if(e.target.id!=="betform")return;e.preventDefault();
+  const err=document.getElementById("betErr"),E=BETS.entries,ps=people();
+  if(!betsOpen()){err.textContent="Betting closed at 2:00 PM.";return;}
+  const f=new URLSearchParams();
+  f.append(E.name,document.getElementById("bName").value.trim());
+  ps.forEach(p=>E[p.id]&&f.append(E[p.id],document.getElementById("b-"+p.id).value));
+  const who=document.getElementById("hWho").value,at=document.getElementById("hAt").value,txt=document.getElementById("hText").value.trim();
+  if(txt&&!who){err.textContent="Pick who the heckle is for.";return;}
+  if(who&&E.target)f.append(E.target,who); if(at&&E.at)f.append(E.at,at); if(txt&&E.comment)f.append(E.comment,txt);
+  err.textContent="Sending…";
+  try{await fetch(BETS.formAction,{method:"POST",mode:"no-cors",body:f});
+    err.textContent="Bet locked in. It'll show up in a few seconds.";e.target.reset();setTimeout(()=>loadBets(true),4000);
+  }catch(x){err.textContent="Couldn't send. Check your signal and try again.";}
+});
+setInterval(()=>{if(current==="bets"&&!document.hidden)loadBets();},60000);
+
 if("serviceWorker" in navigator && location.protocol==="https:"){navigator.serviceWorker.register("sw.js");}
 </script>
 </body>
