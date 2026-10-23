@@ -20,7 +20,11 @@
     }
   ],
   "bars": {},
-  "visits": {},
+  "visits": {
+    "home": {
+      "arrive": "2026-10-23T20:40:06.445Z"
+    }
+  },
   "photos": {
     "home": {
       "bret": "images/crawl/home-bret-1792787934088.jpg",
