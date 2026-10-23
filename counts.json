@@ -1,46 +1,11 @@
 {
   "people": [
-    {
-      "id": "bret",
-      "name": "Bret",
-      "proj": 24,
-      "head": "images/heads/bret.png"
-    },
-    {
-      "id": "travis",
-      "name": "Travis",
-      "proj": 20,
-      "head": "images/heads/travis.png"
-    },
-    {
-      "id": "greg",
-      "name": "Greg",
-      "proj": 18,
-      "head": "images/heads/greg.png"
-    }
+    {"id": "bret", "name": "Bret", "proj": 24, "head": "images/heads/bret.png"},
+    {"id": "travis", "name": "Travis", "proj": 20, "head": "images/heads/travis.png"},
+    {"id": "greg", "name": "Greg", "proj": 18, "head": "images/heads/greg.png"}
   ],
-  "bars": {
-    "mainstreet": {
-      "bret": 2,
-      "greg": 1,
-      "travis": 2
-    }
-  },
-  "visits": {
-    "mainstreet": {
-      "arrive": "2026-10-23T19:11:46.277Z",
-      "depart": "2026-10-23T19:14:14.357Z"
-    }
-  },
-  "photos": {
-    "mainstreet": {
-      "bret": "images/crawl/mainstreet-bret-1792782809919.jpg"
-    }
-  },
-  "last": {
-    "bret": "2026-10-23T19:13:12.258Z",
-    "greg": "2026-10-23T19:11:50.809Z",
-    "travis": "2026-10-23T19:13:10.406Z"
-  },
-  "extra": []
+  "bars": {},
+  "visits": {},
+  "photos": {},
+  "last": {}
 }
