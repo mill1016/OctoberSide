@@ -1,11 +1,31 @@
 {
   "people": [
-    {"id": "bret", "name": "Bret", "proj": 24, "head": "images/heads/bret.png"},
-    {"id": "travis", "name": "Travis", "proj": 20, "head": "images/heads/travis.png"},
-    {"id": "greg", "name": "Greg", "proj": 18, "head": "images/heads/greg.png"}
+    {
+      "id": "bret",
+      "name": "Bret",
+      "proj": 24,
+      "head": "images/heads/bret.png"
+    },
+    {
+      "id": "travis",
+      "name": "Travis",
+      "proj": 20,
+      "head": "images/heads/travis.png"
+    },
+    {
+      "id": "greg",
+      "name": "Greg",
+      "proj": 18,
+      "head": "images/heads/greg.png"
+    }
   ],
   "bars": {},
-  "visits": {},
+  "visits": {
+    "mainstreet": {
+      "arrive": "2026-10-23T19:11:46.277Z"
+    }
+  },
   "photos": {},
-  "last": {}
+  "last": {},
+  "extra": []
 }
