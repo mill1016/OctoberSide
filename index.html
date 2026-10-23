@@ -725,7 +725,8 @@ function renderAdminBar(){
   let bar=document.getElementById("adminbar");
   if(!token){bar&&bar.remove();return;}
   if(!bar){bar=document.createElement("div");bar.id="adminbar";bar.className="adminbar";document.querySelector(".page").append(bar);}
-  bar.innerHTML=`<div><b>Scorekeeper</b> <span id="adminStatus">${statusText||"Ready"}</span></div><button class="btn" type="button" id="signout" style="padding:8px 12px">Sign out</button>`;
+  bar.innerHTML=`<div><b>Scorekeeper</b> <span id="adminStatus">${statusText||"Ready"}</span></div><div style="display:flex;gap:6px"><button class="btn" type="button" id="resetBtn" style="padding:8px 10px">Reset</button><button class="btn" type="button" id="signout" style="padding:8px 12px">Sign out</button></div>`;
+  document.getElementById("resetBtn").onclick=openReset;
   document.getElementById("signout").onclick=()=>{token=null;store.set("oct-token",null);setStatus("");renderAll();};
 }
 
@@ -804,6 +805,26 @@ function openAddStop(){
       state.visits[id]={arrive:now};
     }
     sh.remove();renderAll();show(id,true);queueSave();
+  };
+}
+
+// Scorekeeper reset: clears beers, times, bar photos and added stops. Bets live in the Google Sheet and aren't touched.
+function openReset(){
+  const sh=document.createElement("div");sh.className="sheet";
+  sh.innerHTML=`<div class="card"><h2 style="font-size:24px">Reset the scoreboard?</h2>
+    <p class="sub">Clears every beer, arrive and leave time, bar photo and added stop. Bets and heckles stay; they live in the Google Sheet.</p>
+    <label style="display:flex;gap:8px;align-items:center;margin:12px 0"><input id="keepHome" type="checkbox" checked style="width:auto;margin:0"> Keep the home base photos</label>
+    <div class="row2"><button class="btn" type="button" id="rsCancel">Cancel</button><button class="btn" type="button" id="rsOk" style="background:var(--warn);color:#2A0E09;border-color:var(--warn)">Reset</button></div></div>`;
+  document.body.append(sh);
+  sh.querySelector("#rsCancel").onclick=()=>sh.remove();
+  const ok=sh.querySelector("#rsOk");
+  ok.onclick=()=>{
+    if(!ok.dataset.sure){ok.dataset.sure=1;ok.textContent="Tap again to reset";return;}
+    ensureState();
+    const keep=sh.querySelector("#keepHome").checked&&state.photos.home?{home:state.photos.home}:{};
+    state.bars={};state.visits={};state.last={};state.extra=[];state.photos=keep;
+    Object.keys(localPhotos).forEach(k=>{if(!(keep.home&&k.startsWith("home/")))delete localPhotos[k];});
+    sh.remove();current="route";renderAll();show("route",true);queueSave();setStatus("Scoreboard reset");
   };
 }
 
