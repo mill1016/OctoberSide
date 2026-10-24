@@ -26,7 +26,11 @@
       "greg": 1
     }
   },
-  "visits": {},
+  "visits": {
+    "mainstreet": {
+      "arrive": "2026-10-24T17:58:04.570Z"
+    }
+  },
   "photos": {
     "home": {
       "bret": "images/crawl/home-bret-1792791225842.jpg",
