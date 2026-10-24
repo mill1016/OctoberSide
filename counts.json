@@ -21,7 +21,8 @@
   ],
   "bars": {
     "mainstreet": {
-      "travis": 0
+      "travis": 0,
+      "bret": 1
     }
   },
   "visits": {},
@@ -32,6 +33,8 @@
       "travis": "images/crawl/home-travis-1792793333339.jpg"
     }
   },
-  "last": {},
+  "last": {
+    "bret": "2026-10-24T17:42:59.261Z"
+  },
   "extra": []
 }
