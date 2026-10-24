@@ -19,7 +19,11 @@
       "head": "images/heads/greg.png"
     }
   ],
-  "bars": {},
+  "bars": {
+    "mainstreet": {
+      "travis": 0
+    }
+  },
   "visits": {},
   "photos": {
     "home": {
