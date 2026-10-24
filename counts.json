@@ -28,7 +28,8 @@
   },
   "visits": {
     "mainstreet": {
-      "arrive": "2026-10-24T17:58:04.570Z"
+      "arrive": "2026-10-24T17:58:04.570Z",
+      "depart": "2026-10-24T19:24:46.209Z"
     }
   },
   "photos": {
@@ -39,7 +40,8 @@
     },
     "mainstreet": {
       "bret": "images/crawl/mainstreet-bret-1792869852547.jpg",
-      "travis": "images/crawl/mainstreet-travis-1792869867449.jpg"
+      "travis": "images/crawl/mainstreet-travis-1792869867449.jpg",
+      "greg": "images/crawl/mainstreet-greg-1792869879703.jpg"
     }
   },
   "last": {
