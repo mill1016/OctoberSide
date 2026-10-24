@@ -20,6 +20,9 @@
     }
   ],
   "bars": {
+    "1029": {
+      "greg": 1
+    },
     "mainstreet": {
       "travis": 4,
       "bret": 5,
@@ -68,7 +71,8 @@
   },
   "photos": {
     "1029": {
-      "bret": "images/crawl/1029-bret-1792885805379.jpg"
+      "bret": "images/crawl/1029-bret-1792885805379.jpg",
+      "travis": "images/crawl/1029-travis-1792885815405.jpg"
     },
     "home": {
       "bret": "images/crawl/home-bret-1792791225842.jpg",
@@ -98,7 +102,7 @@
   "last": {
     "bret": "2026-10-24T23:46:29.270Z",
     "travis": "2026-10-24T23:43:52.729Z",
-    "greg": "2026-10-24T23:22:49.725Z"
+    "greg": "2026-10-24T23:50:16.453Z"
   },
   "extra": []
 }
