@@ -99,6 +99,9 @@
     "knightcap": {
       "arrive": "2026-10-25T02:15:19.929Z",
       "depart": "2026-10-25T02:29:19.083Z"
+    },
+    "xmvn8xwff": {
+      "arrive": "2026-10-25T03:06:43.180Z"
     }
   },
   "photos": {
@@ -156,6 +159,13 @@
       "after": "xmvn3fxby",
       "lat": 45.002847,
       "lng": -93.261777
+    },
+    {
+      "id": "xmvn8xwff",
+      "n": "Trav’s Place",
+      "after": "knightcap",
+      "lat": 44.923805,
+      "lng": -93.338962
     }
   ]
 }
